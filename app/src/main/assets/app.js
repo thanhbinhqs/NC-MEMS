@@ -11,6 +11,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       // Load page content from fragment files (fallback to inline if unavailable)
       const pages = ['login', 'home', 'search', 'profile', 'settings'];
+      const filenames = { 'search': 'data', 'settings': 'settings', 'login': 'login', 'home': 'home', 'profile': 'profile' };
       const containers = {
         'login': '#loginScreen',
         'home':  '#mainApp .page-panel[data-page=home]',
@@ -31,7 +32,7 @@
         // Try native bridge first (synchronous, preferred)
         if (typeof Android !== 'undefined' && Android.readAssetFile) {
           try {
-            var html = Android.readAssetFile('pages/' + name + '.html');
+            var html = Android.readAssetFile('pages/' + (filenames[name] || name) + '.html');
             if (html && html.length > 10) {
               el.innerHTML = html;
               console.log('loadPage OK:', name, html.length + 'b');
