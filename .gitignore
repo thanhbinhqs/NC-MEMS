@@ -1,0 +1,32 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+.navigation/
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+# Build outputs
+app/build/
+build/
+*.apk
+*.aab
+*.ap_
+bin/
+gen/
+out/
+# IDE
+.idea/
+*.iml
+.DS_Store
+# NDK / CMake
+.cxx/
+.externalNativeBuild/
+# Gradle wrapper JAR (keep wrapper scripts)
+gradle/wrapper/gradle-wrapper.jar
