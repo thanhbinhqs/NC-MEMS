@@ -20,9 +20,9 @@
               <div class="setting-label">Ngôn ngữ</div>
               <div class="setting-desc">Tiếng Việt</div>
             </div>
-            <span style="color:#1a4a8a;font-weight:600;font-size:13px;">VI</span>
+            <span style="color:#1a4a8a;font-weight:600;font-size:13px;cursor:pointer;" onclick="showLanguagePicker()">VI ›</span>
           </div>
-          <div class="setting-row">
+          <div class="setting-row" onclick="showUnitPicker()" style="cursor:pointer;">
             <div>
               <div class="setting-label">Đơn vị hiển thị</div>
               <div class="setting-desc">Hệ mét / Imperial</div>
@@ -36,14 +36,14 @@
               <div class="setting-label">Tự động quét BLE</div>
               <div class="setting-desc">Tự động tìm thiết bị khi mở app</div>
             </div>
-            <div class="toggle" id="bleAutoToggle" onclick="this.classList.toggle('on')"></div>
+            <div class="toggle" id="bleAutoToggle" onclick="toggleBleAuto(this)"></div>
           </div>
           <div class="setting-row">
             <div>
               <div class="setting-label">Kết nối lại thiết bị cũ</div>
               <div class="setting-desc">Tự động kết nối BLE đã ghép đôi</div>
             </div>
-            <div class="toggle" id="bleReconnectToggle" onclick="this.classList.toggle('on');showToast(this.classList.contains('on')?'🔄 Tự động kết nối lại: BẬT':'🔄 Tự động kết nối lại: TẮT')"></div>
+            <div class="toggle" id="bleReconnectToggle" onclick="toggleBleReconnect(this)"></div>
           </div>
           <button class="settings-ble-btn" onclick="openBLEScanner();">
             📡 Mở BLE Scanner
@@ -76,7 +76,7 @@
               <div class="setting-label">Cảnh báo tồn kho</div>
               <div class="setting-desc">Khi số lượng dưới ngưỡng</div>
             </div>
-            <div class="toggle on" id="stockToggle" onclick="this.classList.toggle('on')"></div>
+            <div class="toggle on" id="stockToggle" onclick="toggleStockAlert(this)"></div>
           </div>
 
           <div class="modal-section-title">ℹ️ Ứng dụng</div>

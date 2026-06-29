@@ -307,25 +307,139 @@
     function openSettings() {
       lastPage = currentPage;
       switchPage('settings');
+      // Restore toggle states when opening settings
+      restoreSettingToggles();
     }
     function goBackFromSettings() {
       const target = lastPage || 'home';
       switchPage(target, document.querySelector(`.nav-item[data-page="${target}"]`));
     }
 
-    function openWifiConfig() { showToast('Tính năng WiFi Config đang phát triển'); }
+    function openWifiConfig() {
+      document.getElementById('wifiConfigDialog').classList.add('open');
+    }
+    function closeWifiConfig() {
+      document.getElementById('wifiConfigDialog').classList.remove('open');
+    }
+    function saveWifiConfig() {
+      const ssid = document.getElementById('wifiSsidInput').value.trim();
+      const pass = document.getElementById('wifiPassInput').value.trim();
+      if (!ssid) { showToast('⚠️ Vui lòng nhập tên WiFi'); return; }
+      ApiService.saveSettings({ wifi_ssid: ssid, wifi_password: pass }).then(() => {
+        closeWifiConfig();
+        showToast('✅ Đã lưu cấu hình WiFi: ' + ssid);
+      });
+    }
 
     function toggleDarkMode() {
       darkMode = !darkMode;
       document.getElementById('darkToggle').classList.toggle('on');
       document.body.classList.toggle('dark');
       showToast(darkMode ? '🌙 Chế độ tối' : '☀️ Chế độ sáng');
+      ApiService.saveSettings({ dark_mode: darkMode });
     }
 
     function toggleNotif() {
       document.getElementById('notifToggle').classList.toggle('on');
       const on = document.getElementById('notifToggle').classList.contains('on');
       showToast(on ? '🔔 Thông báo đã bật' : '🔕 Thông báo đã tắt');
+      ApiService.saveSettings({ push_notif: on });
+    }
+
+    function toggleBleAuto(el) {
+      el.classList.toggle('on');
+      const on = el.classList.contains('on');
+      ApiService.saveSettings({ ble_auto_scan: on });
+      showToast(on ? '📡 Tự động quét BLE: BẬT' : '📡 Tự động quét BLE: TẮT');
+    }
+
+    function toggleBleReconnect(el) {
+      el.classList.toggle('on');
+      const on = el.classList.contains('on');
+      ApiService.saveSettings({ ble_reconnect: on });
+      showToast(on ? '🔄 Kết nối lại BLE: BẬT' : '🔄 Kết nối lại BLE: TẮT');
+    }
+
+    function toggleStockAlert(el) {
+      el.classList.toggle('on');
+      const on = el.classList.contains('on');
+      ApiService.saveSettings({ stock_alert: on });
+      showToast(on ? '📦 Cảnh báo tồn kho: BẬT' : '📦 Cảnh báo tồn kho: TẮT');
+    }
+
+    function showLanguagePicker() {
+      document.getElementById('languageDialog').classList.add('open');
+    }
+    function closeLanguagePicker() {
+      document.getElementById('languageDialog').classList.remove('open');
+    }
+    function setLanguage(lang, label) {
+      document.getElementById('languageDialog').classList.remove('open');
+      document.querySelector('#settingsContent .setting-row:nth-child(3) .setting-desc').textContent = label;
+      document.querySelector('#settingsContent .setting-row:nth-child(3) span').textContent = lang.toUpperCase();
+      ApiService.saveSettings({ language: lang });
+      showToast('🌐 Ngôn ngữ: ' + label);
+    }
+
+    function showUnitPicker() {
+      document.getElementById('unitDialog').classList.add('open');
+    }
+    function closeUnitPicker() {
+      document.getElementById('unitDialog').classList.remove('open');
+    }
+    function setUnit(unit, label) {
+      document.getElementById('unitDialog').classList.remove('open');
+      document.querySelector('#settingsContent .setting-row:nth-child(4) .setting-desc').textContent = label;
+      document.querySelector('#settingsContent .setting-row:nth-child(4) span').textContent = label;
+      ApiService.saveSettings({ unit: unit });
+      showToast('📏 Đơn vị: ' + label);
+    }
+
+    function restoreSettingToggles() {
+      ApiService.loadSettings().then(settings => {
+        // Dark mode
+        if (settings.dark_mode === true) {
+          document.getElementById('darkToggle').classList.add('on');
+          document.body.classList.add('dark');
+        }
+        // BLE auto scan
+        const bleAuto = document.getElementById('bleAutoToggle');
+        if (settings.ble_auto_scan === true) bleAuto.classList.add('on');
+        // BLE reconnect
+        const bleRe = document.getElementById('bleReconnectToggle');
+        if (settings.ble_reconnect === true) bleRe.classList.add('on');
+        // Push notification
+        const notif = document.getElementById('notifToggle');
+        if (settings.push_notif === false) notif.classList.remove('on');
+        // Stock alert
+        const stock = document.getElementById('stockToggle');
+        if (settings.stock_alert === false) stock.classList.remove('on');
+        // Language
+        if (settings.language) {
+          const labels = { vi: 'Tiếng Việt', en: 'English', ja: '日本語', ko: '한국어' };
+          const label = labels[settings.language] || 'Tiếng Việt';
+          const langEl = document.querySelector('#settingsContent .setting-row:nth-child(3)');
+          if (langEl) {
+            langEl.querySelector('.setting-desc').textContent = label;
+            langEl.querySelector('span').textContent = settings.language.toUpperCase();
+          }
+        }
+        // Unit
+        if (settings.unit) {
+          const labels = { metric: 'Hệ mét', imperial: 'Imperial' };
+          const label = labels[settings.unit] || 'Hệ mét';
+          const unitEl = document.querySelector('#settingsContent .setting-row:nth-child(4)');
+          if (unitEl) {
+            unitEl.querySelector('.setting-desc').textContent = label;
+            unitEl.querySelector('span').textContent = label;
+          }
+        }
+        // WiFi config
+        if (settings.wifi_ssid) {
+          const wifiEl = document.querySelector('#settingsContent .setting-row[onclick*="openWifiConfig"] .setting-desc');
+          if (wifiEl) wifiEl.textContent = 'Đã kết nối: ' + settings.wifi_ssid;
+        }
+      }).catch(() => {});
     }
 
     // ======================== LOGOUT ========================
@@ -333,6 +447,15 @@
     function closeLogout() { document.getElementById('logoutModal').classList.remove('open'); }
     document.getElementById('logoutModal').addEventListener('click', function(e) {
       if (e.target === this) closeLogout();
+    });
+    document.getElementById('languageDialog').addEventListener('click', function(e) {
+      if (e.target === this) closeLanguagePicker();
+    });
+    document.getElementById('unitDialog').addEventListener('click', function(e) {
+      if (e.target === this) closeUnitPicker();
+    });
+    document.getElementById('wifiConfigDialog').addEventListener('click', function(e) {
+      if (e.target === this) closeWifiConfig();
     });
 
     function doLogout() {
