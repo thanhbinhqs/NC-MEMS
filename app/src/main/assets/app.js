@@ -1,10 +1,4 @@
     // ======================== STATE ========================
-    const USERS = {
-      'admin': { pass: 'admin123', name: 'Nguyễn Văn A', role: 'Kỹ sư sản xuất' },
-      'user':  { pass: 'user123',  name: 'Trần Thị B',   role: 'Kỹ thuật viên' },
-      'manager': { pass: 'mgr123', name: 'Lê Văn C',     role: 'Quản lý sản xuất' }
-    };
-
     let currentPage = 'home';
     let lastPage = 'home';
     let darkMode = false;
@@ -68,7 +62,7 @@
       if (saved) {
         try {
           const data = JSON.parse(saved);
-          if (data.loggedIn && USERS[data.username]) {
+          if (data.loggedIn && data.username) {
             isLoggedIn = true;
           }
         } catch(e) {}
@@ -96,34 +90,28 @@
 
     function handleLogin() {
       const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const errorEl = document.getElementById('loginError');
+      const password = document.getElementById('loginPassword').value.trim();
       const btn = document.getElementById('loginBtn');
+      const errorEl = document.getElementById('loginError');
+      const remember = document.getElementById('rememberMe').checked;
 
-      if (!username || !password) {
-        errorEl.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu';
-        errorEl.classList.add('show');
-        return;
-      }
-
-      btn.classList.add('loading');
       errorEl.classList.remove('show');
+      btn.classList.add('loading');
 
-      setTimeout(() => {
-        btn.classList.remove('loading');
-        const user = USERS[username];
-        if (user && user.pass === password) {
-          if (document.getElementById('rememberMe').checked) {
-            localStorage.setItem('ncmems_session', JSON.stringify({
-              loggedIn: true, username: username, name: user.name, role: user.role
-            }));
+      ApiService.login(username, password)
+        .then(resp => {
+          localStorage.setItem('ncmems_api_token', resp.token);
+          localStorage.setItem('ncmems_user', JSON.stringify(resp.user));
+          if (remember) {
+            localStorage.setItem('ncmems_session', JSON.stringify({ loggedIn: true, username, ...resp.user }));
           }
-          enterMainApp(user);
-        } else {
-          errorEl.textContent = '❌ Sai tên đăng nhập hoặc mật khẩu';
+          setTimeout(() => { btn.classList.remove('loading'); enterMainApp(resp.user); }, 600);
+        })
+        .catch(err => {
+          btn.classList.remove('loading');
+          errorEl.textContent = '❌ ' + err.message;
           errorEl.classList.add('show');
-        }
-      }, 1200);
+        });
     }
 
     // ======================== CONNECTION CHECK ========================
@@ -225,7 +213,11 @@
 
     // ======================== MAIN APP ENTRY ========================
     function enterMainApp(userData) {
-      const username = userData ? userData.name : (() => {
+      const username = userData ? userData.username : (() => {
+        const saved = JSON.parse(localStorage.getItem('ncmems_session') || '{}');
+        return saved.username || 'admin';
+      })();
+      const name = userData ? userData.name : (() => {
         const saved = JSON.parse(localStorage.getItem('ncmems_session') || '{}');
         return saved.name || 'Nguyễn Văn A';
       })();
@@ -237,12 +229,11 @@
       document.getElementById('loginScreen').classList.remove('active');
       document.getElementById('mainApp').classList.add('active');
 
-      // Retry setting profile info if page content not yet loaded
       function setProfile() {
         const nameEl = document.getElementById('profileName');
         const roleEl = document.getElementById('profileRole');
         if (nameEl && roleEl) {
-          nameEl.textContent = username;
+          nameEl.textContent = name;
           roleEl.textContent = role;
         } else {
           setTimeout(setProfile, 50);
@@ -282,36 +273,33 @@
 
     // ======================== SEARCH ========================
     function handleSearch() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const q = document.getElementById('searchInput').value.trim();
       const container = document.getElementById('searchResults');
       if (!q) {
         container.innerHTML = '<div class="search-hint">🔍 Nhập từ khóa để tìm kiếm</div>';
         return;
       }
-      const data = [
-        { name: 'JIG', desc: 'Quản lý & Theo dõi Dụng cụ' },
-        { name: 'PART', desc: 'Quản lý Phụ kiện & Vật tư' },
-        { name: 'ESD', desc: 'Quản lý Thiết bị Chống Tĩnh điện' },
-        { name: 'PRODUCTION EQUIPMENT', desc: 'Quản lý thiết bị sản xuất' },
-      ];
-      const results = data.filter(item =>
-        item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
-      );
-      if (results.length === 0) {
-        container.innerHTML = '<div class="search-hint">😕 Không tìm thấy kết quả</div>';
-      } else {
-        container.innerHTML = results.map(r => `
-          <div class="card" onclick="navigateTo('${r.name}')" style="animation:none;">
-            <div class="card-info">
-              <h3>${r.name}</h3>
-              <p>${r.desc}</p>
+      container.innerHTML = '<div class="search-hint" style="color:#1a4a8a;">🔍 Đang tìm...</div>';
+      ApiService.search(q).then(results => {
+        if (results.length === 0) {
+          container.innerHTML = '<div class="search-hint">😕 Không tìm thấy kết quả</div>';
+        } else {
+          container.innerHTML = results.map(r => `
+            <div class="card" onclick="navigateTo('${r.category}')" style="animation:none;">
+              <div class="card-info">
+                <h3>${r.name}</h3>
+                <p>${r.desc}</p>
+                <div style="font-size:11px;color:#888;margin-top:2px;">📍 ${r.location || ''}</div>
+              </div>
+              <div class="card-arrow">
+                <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+              </div>
             </div>
-            <div class="card-arrow">
-              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-            </div>
-          </div>
-        `).join('');
-      }
+          `).join('');
+        }
+      }).catch(err => {
+        container.innerHTML = '<div class="search-hint" style="color:#d32f2f;">⚠️ Lỗi: ' + err.message + '</div>';
+      });
     }
 
     // ======================== SETTINGS ========================
@@ -347,14 +335,19 @@
     });
 
     function doLogout() {
-      localStorage.removeItem('ncmems_session');
-      isLoggedIn = false;
-      document.getElementById('logoutModal').classList.remove('open');
-      document.getElementById('mainApp').classList.remove('active');
-      document.getElementById('loginScreen').classList.add('active');
-      document.getElementById('loginPassword').value = '';
-      document.getElementById('loginError').classList.remove('show');
-      showToast('👋 Đã đăng xuất');
+      closeLogout();
+      ApiService.logout().then(() => {
+        isLoggedIn = false;
+        localStorage.removeItem('ncmems_session');
+        document.getElementById('mainApp').classList.remove('active');
+        document.getElementById('loginScreen').classList.add('active');
+        showToast('👋 Đã đăng xuất');
+      }).catch(() => {
+        isLoggedIn = false;
+        localStorage.removeItem('ncmems_session');
+        document.getElementById('mainApp').classList.remove('active');
+        document.getElementById('loginScreen').classList.add('active');
+      });
     }
 
     // ======================== BLE SCANNER ========================
