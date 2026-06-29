@@ -1,0 +1,59 @@
+<div class="login-header-area">
+        <div class="logo-circle">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7v6c0 5.05 3.84 9.74 9 11 5.16-1.26 9-5.95 9-11V7l-8-5zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V8.3l7-3.11v7.8z"/></svg>
+        </div>
+        <h1>NC MEMS</h1>
+        <p>Hệ thống quản lý chung</p>
+      </div>
+      <div class="login-body">
+        <h2>Đăng nhập</h2>
+        <p class="login-sub">Vui lòng đăng nhập để tiếp tục</p>
+
+        <div class="input-group">
+          <label>Tên đăng nhập</label>
+          <div class="input-field">
+            <svg class="field-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <input type="text" id="loginUsername" placeholder="Nhập tài khoản" autocomplete="username" value="admin">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Mật khẩu</label>
+          <div class="input-field">
+            <svg class="field-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password" value="admin123">
+            <svg class="toggle-pw" id="togglePw" viewBox="0 0 24 24" onclick="togglePassword()"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </div>
+        </div>
+
+        <div class="login-options">
+          <label class="remember-me">
+            <input type="checkbox" id="rememberMe" checked>
+            Ghi nhớ đăng nhập
+          </label>
+          <a href="#" class="forgot-link" onclick="showToast('Liên hệ quản trị viên để đặt lại mật khẩu')">Quên mật khẩu?</a>
+        </div>
+
+        <button class="btn-login" id="loginBtn" onclick="handleLogin()">
+          <span class="btn-text">Đăng nhập</span>
+          <span class="spinner"></span>
+        </button>
+
+        <div class="login-error" id="loginError">Sai tên đăng nhập hoặc mật khẩu</div>
+
+        <!-- LOGIN PAGE MAC QR CODE -->
+        <div id="loginMacQR" style="display:none;text-align:center;margin:4px 0 2px;">
+          <div id="loginMacQRValue" style="font-family:monospace;font-size:11px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:4px;"></div>
+          <div style="display:inline-block;position:relative;">
+            <canvas id="loginQRCanvas" style="width:140px;height:140px;border-radius:8px;background:#fff;"></canvas>
+            <button onclick="toggleMacConfig()" title="Sửa địa chỉ MAC"
+              style="position:absolute;top:-6px;right:-6px;background:#1a4a8a;color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);z-index:5;">✎</button>
+          </div>
+        </div>
+
+        <!-- MAC config link (only visible when no MAC saved) -->
+        <a href="#" class="mac-config-link" id="macConfigLink" onclick="event.preventDefault();toggleMacConfig()">📡 Cài đặt địa chỉ MAC thiết bị</a>
+
+        <div class="login-footer">NC MEMS v1.0 © 2026</div>
+      </div>
+    

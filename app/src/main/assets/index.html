@@ -8,6 +8,7 @@
 </head>
 <body>
   <div class="phone-frame" id="app">
+
     <!-- ==================== SPLASH SCREEN ==================== -->
     <div id="splashScreen">
       <div class="splash-logo">
@@ -20,328 +21,46 @@
       </div>
     </div>
 
-    <!-- ==================== LOGIN SCREEN ==================== -->
-    <div id="loginScreen">
-      <div class="login-header-area">
-        <div class="logo-circle">
-          <svg viewBox="0 0 24 24"><path d="M12 2L2 7v6c0 5.05 3.84 9.74 9 11 5.16-1.26 9-5.95 9-11V7l-8-5zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V8.3l7-3.11v7.8z"/></svg>
-        </div>
-        <h1>NC MEMS</h1>
-        <p>Hệ thống quản lý chung</p>
-      </div>
-      <div class="login-body">
-        <h2>Đăng nhập</h2>
-        <p class="login-sub">Vui lòng đăng nhập để tiếp tục</p>
-
-        <div class="input-group">
-          <label>Tên đăng nhập</label>
-          <div class="input-field">
-            <svg class="field-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            <input type="text" id="loginUsername" placeholder="Nhập tài khoản" autocomplete="username" value="admin">
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>Mật khẩu</label>
-          <div class="input-field">
-            <svg class="field-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-            <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password" value="admin123">
-            <svg class="toggle-pw" id="togglePw" viewBox="0 0 24 24" onclick="togglePassword()"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-          </div>
-        </div>
-
-        <div class="login-options">
-          <label class="remember-me">
-            <input type="checkbox" id="rememberMe" checked>
-            Ghi nhớ đăng nhập
-          </label>
-          <a href="#" class="forgot-link" onclick="showToast('Liên hệ quản trị viên để đặt lại mật khẩu')">Quên mật khẩu?</a>
-        </div>
-
-        <button class="btn-login" id="loginBtn" onclick="handleLogin()">
-          <span class="btn-text">Đăng nhập</span>
-          <span class="spinner"></span>
-        </button>
-
-        <div class="login-error" id="loginError">Sai tên đăng nhập hoặc mật khẩu</div>
-
-        <!-- LOGIN PAGE MAC QR CODE -->
-        <div id="loginMacQR" style="display:none;text-align:center;margin:4px 0 2px;">
-          <div id="loginMacQRValue" style="font-family:monospace;font-size:11px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:4px;"></div>
-          <div style="display:inline-block;position:relative;">
-            <canvas id="loginQRCanvas" style="width:140px;height:140px;border-radius:8px;background:#fff;"></canvas>
-            <button onclick="toggleMacConfig()" title="Sửa địa chỉ MAC"
-              style="position:absolute;top:-6px;right:-6px;background:#1a4a8a;color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);z-index:5;">✎</button>
-          </div>
-        </div>
-
-        <!-- MAC config link (only visible when no MAC saved) -->
-        <a href="#" class="mac-config-link" id="macConfigLink" onclick="event.preventDefault();toggleMacConfig()">📡 Cài đặt địa chỉ MAC thiết bị</a>
-
-        <div class="login-footer">NC MEMS v1.0 © 2026</div>
-      </div>
-    </div>
+    <!-- ==================== LOGIN SCREEN (loaded from pages/login.html) ==================== -->
+    <div id="loginScreen"></div>
 
     <!-- ==================== MAIN APP ==================== -->
     <div id="mainApp">
-      <!-- Home Panel -->
-      <div class="page-panel active" data-page="home">
-        <div class="header">
-          <h1>NC MEMS</h1>
-          <div class="settings-btn" onclick="openSettings()">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-          </div>
-        </div>
-        <div class="content" id="homeContent">
-          <div class="page-title">QUẢN LÝ CHUNG</div>
-          <div class="section-label">Danh mục</div>
+      <div class="page-panel active" data-page="home"></div>
+      <div class="page-panel" data-page="search"></div>
+      <div class="page-panel" data-page="profile"></div>
+      <div class="page-panel" data-page="settings"></div>
 
-          <div class="card" onclick="navigateTo('JIG')">
-            <div class="card-icon jig">
-              <svg viewBox="0 0 24 24" fill="#1a4a8a"><path d="M21 0c-1.66 0-3 1.34-3 3v3h-4V6c0-1.66-1.34-3-3-3S8 4.34 8 6v3h-2V6c0-1.66-1.34-3-3-3S0 4.34 0 6v12c0 1.66 1.34 3 3 3s3-1.34 3-3v-3h2v3c0 1.66 1.34 3 3 3s3-1.34 3-3v-3h4v3c0 1.66 1.34 3 3 3s3-1.34 3-3V6c0-1.66-1.34-3-3-3z"/></svg>
-            </div>
-            <div class="card-info">
-              <h3>JIG</h3>
-              <p>Quản lý & Theo dõi Dụng cụ</p>
-              <div class="count">150 mặt hàng</div>
-            </div>
-            <div class="card-arrow">
-              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-            </div>
-          </div>
-
-          <div class="card" onclick="navigateTo('PART')">
-            <div class="card-icon part">
-              <svg viewBox="0 0 24 24" fill="#d93025"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            </div>
-            <div class="card-info">
-              <h3>PART</h3>
-              <p>Quản lý Phụ kiện & Vật tư</p>
-              <div class="count">3,500 linh kiện</div>
-            </div>
-            <div class="card-arrow">
-              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-            </div>
-          </div>
-
-          <div class="card" onclick="navigateTo('ESD')">
-            <div class="card-icon esd">
-              <svg viewBox="0 0 24 24" fill="#1e8e3e"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-            </div>
-            <div class="card-info">
-              <h3>ESD</h3>
-              <p>Quản lý Thiết bị Chống Tĩnh điện</p>
-              <div class="count">210 thiết bị</div>
-            </div>
-            <div class="card-arrow">
-              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-            </div>
-          </div>
-
-          <div class="card" onclick="navigateTo('PRODUCTION')">
-            <div class="card-icon production">
-              <svg viewBox="0 0 24 24" fill="#e37400"><path d="M22 7.81c0-.45-.18-.89-.53-1.21l-3.45-3.47c-.33-.32-.78-.47-1.22-.47s-.88.16-1.2.47L5.25 14.47l-.04.04-2.46 2.44c-.23.23-.29.44-.29.62 0 .18.06.41.33.67L5.71 21.2c.26.26.48.33.66.33.18 0 .38-.06.62-.28l2.5-2.5.04-.04L3.41 7.72c-.33-.64-.11-1.45.52-1.79.63-.34 1.4-.13 1.75.5l5.2 7.18 5.59-5.59-2.78-2.78c-.33-.33-.78-.47-1.22-.47-.44 0-.88.16-1.2.47L3.79 16.06c-.62.62-.62 1.59 0 2.21l3.47 3.47c.62.62 1.59.62 2.21 0l12.03-12.03c.33-.33.5-.76.5-1.2v-.7z"/></svg>
-            </div>
-            <div class="card-info">
-              <h3>PRODUCTION EQUIPMENT</h3>
-              <p>Quản lý thiết bị sản xuất</p>
-              <div class="count">45 thiết bị</div>
-            </div>
-            <div class="card-arrow">
-              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Search Panel -->
-      <div class="page-panel" data-page="search">
-        <div class="header" style="padding-top:12px;">
-          <h1 style="font-size:18px;">TÌM KIẾM</h1>
-          <div style="width:38px;"></div>
-        </div>
-        <div class="content">
-          <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm JIG, PART, ESD..." onkeyup="if(event.key==='Enter')handleSearch()">
-            <button onclick="handleSearch()">Tìm</button>
-          </div>
-          <div id="searchResults">
-            <div class="search-hint">🔍 Nhập từ khóa để tìm kiếm</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Panel -->
-      <div class="page-panel" data-page="data">
-        <div class="header" style="padding-top:12px;">
-          <h1 style="font-size:18px;">DỮ LIỆU</h1>
-          <div style="width:38px;"></div>
-        </div>
-        <div class="content">
-          <div class="section-label">Thống kê</div>
-          <div class="data-placeholder">
-            <div class="big-icon">📊</div>
-            <p>Biểu đồ và thống kê sẽ hiển thị tại đây</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Profile Panel -->
-      <div class="page-panel" data-page="profile">
-        <div class="header">
-          <h1 style="font-size:18px;">HỒ SƠ</h1>
-          <div class="settings-btn" onclick="openSettings()">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-          </div>
-        </div>
-        <div class="content" id="profileContent">
-          <div class="profile-cover">
-            <div class="avatar-wrapper">
-              👤
-              <div class="online-dot"></div>
-            </div>
-            <h3 id="profileName">Nguyễn Văn A</h3>
-            <div class="role-tag" id="profileRole">Kỹ sư sản xuất</div>
-            <div class="user-stats">
-              <div class="stat"><div class="num">150</div><div class="lbl">JIG</div></div>
-              <div class="stat"><div class="num">3.5K</div><div class="lbl">PART</div></div>
-              <div class="stat"><div class="num">210</div><div class="lbl">ESD</div></div>
-            </div>
-          </div>
-
-          <div style="margin-top:32px;padding-bottom:16px;">
-            <button class="btn-login" style="background:#d93025;" onclick="confirmLogout()">
-              <span>Đăng xuất</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-        <!-- ==================== SETTINGS PAGE ==================== -->
-        <div class="page-panel" data-page="settings">
-        <div class="header">
-          <div class="settings-btn" onclick="goBackFromSettings()" style="display:flex;align-items:center;gap:4px;width:auto;padding:0 4px;">
-            <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:white;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-            <span style="font-size:14px;font-weight:500;">Quay lại</span>
-          </div>
-          <h1 style="font-size:18px;">CÀI ĐẶT</h1>
-          <div style="width:38px;"></div>
-        </div>
-        <div class="content" id="settingsContent">
-          <div class="modal-section-title">🎨 Giao diện & Hiển thị</div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Chế độ tối</div>
-              <div class="setting-desc">Giao diện tối cho môi trường thiếu sáng</div>
-            </div>
-            <div class="toggle" id="darkToggle" onclick="toggleDarkMode()"></div>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Ngôn ngữ</div>
-              <div class="setting-desc">Tiếng Việt</div>
-            </div>
-            <span style="color:#1a4a8a;font-weight:600;font-size:13px;">VI</span>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Đơn vị hiển thị</div>
-              <div class="setting-desc">Hệ mét / Imperial</div>
-            </div>
-            <span style="color:#1a4a8a;font-weight:600;font-size:13px;">Hệ mét</span>
-          </div>
-
-          <div class="modal-section-title">📶 Kết nối</div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Tự động quét BLE</div>
-              <div class="setting-desc">Tự động tìm thiết bị khi mở app</div>
-            </div>
-            <div class="toggle" id="bleAutoToggle" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Kết nối lại thiết bị cũ</div>
-              <div class="setting-desc">Tự động kết nối BLE đã ghép đôi</div>
-            </div>
-            <div class="toggle" id="bleReconnectToggle" onclick="this.classList.toggle('on');showToast(this.classList.contains('on')?'🔄 Tự động kết nối lại: BẬT':'🔄 Tự động kết nối lại: TẮT')"></div>
-          </div>
-          <button class="settings-ble-btn" onclick="openBLEScanner();">
-            📡 Mở BLE Scanner
-          </button>
-          <div class="setting-row" onclick="openWifiConfig()" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">WiFi Config</div>
-              <div class="setting-desc">Cấu hình kết nối mạng cho thiết bị</div>
-            </div>
-            <span style="color:#999;font-size:18px;">›</span>
-          </div>
-          <div class="setting-row" onclick="showToast('Tính năng đang phát triển')" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">Kết nối thiết bị ngoại vi</div>
-              <div class="setting-desc">USB, Serial, NFC</div>
-            </div>
-            <span class="pm-badge" style="position:static;font-size:10px;">Mới</span>
-          </div>
-
-          <div class="modal-section-title">🔔 Thông báo</div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Thông báo đẩy</div>
-              <div class="setting-desc">Nhận thông báo khi có cập nhật</div>
-            </div>
-            <div class="toggle on" id="notifToggle" onclick="toggleNotif()"></div>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Cảnh báo tồn kho</div>
-              <div class="setting-desc">Khi số lượng dưới ngưỡng</div>
-            </div>
-            <div class="toggle on" id="stockToggle" onclick="this.classList.toggle('on')"></div>
-          </div>
-
-          <div class="modal-section-title">ℹ️ Ứng dụng</div>
-          <div class="setting-row" onclick="showToast('NC MEMS v1.0.0')" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">Phiên bản</div>
-              <div class="setting-desc">NC MEMS v1.0.0</div>
-            </div>
-          </div>
-
-          <div style="height:24px;"></div>
-        </div>
-        </div>
-
-        <!-- Bottom Navigation -->
-        <div class="bottom-nav">
-        <button class="nav-item active" data-page="home" onclick="switchPage('home', this)">
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <div class="nav-item active" data-target="home" onclick="switchPage('home')">
           <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <span>Home</span>
-        </button>
-        <button class="nav-item" data-page="search" onclick="switchPage('search', this)">
-          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          <span>Tìm kiếm</span>
-        </button>
-        <button class="nav-item" data-page="data" onclick="switchPage('data', this)">
-          <svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/><path d="M3 21h18v-2H3v2z" fill="none"/></svg>
-          <span>Data</span>
-        </button>
-        <button class="nav-item" data-page="profile" onclick="switchPage('profile', this)">
+          <span>Trang chủ</span>
+        </div>
+        <div class="nav-item" data-target="search" onclick="switchPage('search')">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <span>Dữ liệu</span>
+        </div>
+        <div class="nav-item" data-target="profile" onclick="switchPage('profile')">
           <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          <span>Profile</span>
-        </button>
+          <span>Hồ sơ</span>
         </div>
+        <div class="nav-item" data-target="settings" onclick="switchPage('settings')">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span>Cài đặt</span>
         </div>
+      </div>
+    </div>
 
-        <!-- ==================== BLE SCANNER SUB-PAGE ==================== -->
-        <div class="sub-page" id="bleScannerPage">
-        <div class="sub-header">
+    <!-- ==================== BLE SCANNER SUB-PAGE ==================== -->
+    <div class="sub-page" id="bleScannerPage">
+      <div class="sub-header">
         <div class="back-btn" onclick="closeBLEScanner()">
           <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
         </div>
         <h2>BLE Scanner</h2>
-        </div>
-        <div class="sub-content">
+      </div>
+      <div class="sub-content">
         <div class="profile-section-title" style="margin-top:0;">Thiết bị khả dụng</div>
         <div id="bleDeviceList">
           <div class="ble-empty">🔍 Nhấn "Quét" để tìm thiết bị</div>
@@ -350,98 +69,85 @@
           <span class="scan-spinner"></span>
           <span id="bleScanText">🔍 Quét thiết bị</span>
         </button>
-        </div>
-        </div>
+      </div>
+    </div>
 
-        <!-- ==================== MAC ADDRESS DIALOG ==================== -->
-        <div class="modal-overlay" id="macDialog">
-        <div class="modal-content confirm-content" style="max-width:340px;padding:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h2 style="margin:0;">📡 Địa chỉ MAC</h2>
-            <button onclick="closeMacDialog()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;color:#999;">✕</button>
+    <!-- ==================== MAC ADDRESS DIALOG ==================== -->
+    <div class="modal-overlay" id="macDialog">
+      <div class="modal-content confirm-content" style="max-width:340px;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">📡</span>
+            <h2 style="margin:0;font-size:16px;">Địa chỉ MAC</h2>
           </div>
-          <p style="font-size:12px;color:#888;margin-bottom:14px;">Nhập địa chỉ MAC của thiết bị BLE để kết nối.</p>
+          <button onclick="closeMacDialog()" class="modal-close">✕</button>
+        </div>
 
-          <!-- Input mode -->
-          <div id="macDialogInput">
-            <div style="margin-bottom:8px;">
-              <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Địa chỉ MAC</div>
-              <input type="text" id="macDialogInputField" placeholder="VD: AA:BB:CC:DD:EE:FF"
-                     style="width:100%;padding:10px 12px;border:2px solid #ddd;border-radius:8px;font-size:15px;font-family:monospace;letter-spacing:1px;outline:none;box-sizing:border-box;"
-                     maxlength="17" oninput="onMACInput()" onkeydown="if(event.key==='Enter')saveMacAddress()">
-              <div id="macValidationMsg" style="font-size:11px;color:#d32f2f;margin-top:4px;display:none;"></div>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="saveMacAddress()" style="flex:1;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Lưu</button>
-              <button onclick="deleteMacAddress()" id="macDeleteBtn" style="background:#f5f5f5;color:#d32f2f;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;display:none;">🗑️</button>
-            </div>
+        <div id="macDialogInput">
+          <div style="font-size:12px;color:#888;margin-bottom:12px;">Nhập địa chỉ MAC của thiết bị BLE để kết nối.</div>
+          <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Địa chỉ MAC</div>
+          <input type="text" id="macDialogInputField" placeholder="VD: AA:BB:CC:DD:EE:FF"
+                 oninput="onMACInput()" onkeydown="if(event.key==='Enter')saveMacAddress()"
+                 style="width:100%;padding:10px 12px;border:2px solid #ddd;border-radius:8px;font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;">
+          <div id="macValidationMsg" style="display:none;font-size:11px;margin-top:4px;"></div>
+          <button onclick="saveMacAddress()" style="width:100%;margin-top:12px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Lưu</button>
+        </div>
+
+        <div id="macDialogDisplay" style="display:none;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:12px;color:#888;margin-bottom:4px;">Đã lưu</div>
+            <div style="font-size:18px;font-weight:700;font-family:monospace;letter-spacing:2px;color:#1a4a8a;" id="macDialogDisplayValue"></div>
           </div>
-
-          <!-- Display mode -->
-          <div id="macDialogDisplay" style="display:none;">
-            <div style="text-align:center;margin-bottom:16px;">
-              <div style="font-size:12px;color:#888;margin-bottom:4px;">Đã lưu</div>
-              <div style="font-size:18px;font-weight:700;font-family:monospace;letter-spacing:2px;color:#1a4a8a;" id="macDialogDisplayValue"></div>
-            </div>
-
-            <div style="display:flex;gap:8px;">
-              <button onclick="editMacAddress()" style="flex:1;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">✏️ Sửa</button>
-              <button onclick="deleteMacAddress()" style="background:#f5f5f5;color:#d32f2f;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;">🗑️ Xóa</button>
-            </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="editMacAddress()" style="flex:1;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">✏️ Sửa</button>
+            <button onclick="deleteMacAddress()" style="background:#f5f5f5;color:#d32f2f;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;">🗑️ Xóa</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ==================== CONNECTION CHECK ==================== -->
+    <div class="modal-overlay" id="connectionModal" style="z-index:200;">
+      <div class="modal-content confirm-content">
+        <h2 style="font-size:16px;margin-bottom:8px;">🔗 Kiểm tra kết nối</h2>
+        <p style="font-size:13px;color:#666;margin-bottom:12px;">Vui lòng bật WiFi và Bluetooth để sử dụng ứng dụng</p>
+
+        <div id="connWifi" class="conn-item pending">
+          <span class="conn-icon">📶</span>
+          <div style="flex:1;"><div style="font-weight:600;">WiFi</div><div class="conn-status" id="connWifiStatus">Đang kiểm tra...</div></div>
         </div>
 
-        <!-- ==================== CONNECTION CHECK ==================== -->
-        <div class="modal-overlay" id="connectionModal" style="z-index:200;">
-        <div class="modal-content confirm-content">
-          <h2>📡 Kết nối thiết bị</h2>
-          <p style="font-size:13px;color:#666;margin-bottom:16px;">Ứng dụng cần bật <strong>WiFi</strong> và <strong>Bluetooth</strong> để hoạt động. Sau khi bật, ứng dụng sẽ tự động chuyển đến đăng nhập.</p>
-          <div id="connStatusList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
-            <div class="conn-item" id="connWifiRow" style="display:flex;align-items:center;justify-content:space-between;background:#f5f5f5;border-radius:10px;padding:12px 14px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">📶</span>
-                <div>
-                  <div style="font-weight:600;font-size:14px;color:#333;">WiFi</div>
-                  <div id="connWifiStatus" style="font-size:12px;color:#999;">Đang kiểm tra...</div>
-                </div>
-              </div>
-              <button id="connWifiBtn" onclick="openWifiSettings()" style="background:#1a4a8a;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">Bật WiFi</button>
-            </div>
-            <div class="conn-item" id="connBtRow" style="display:flex;align-items:center;justify-content:space-between;background:#f5f5f5;border-radius:10px;padding:12px 14px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:22px;">🔵</span>
-                <div>
-                  <div style="font-weight:600;font-size:14px;color:#333;">Bluetooth</div>
-                  <div id="connBtStatus" style="font-size:12px;color:#999;">Đang kiểm tra...</div>
-                </div>
-              </div>
-              <button id="connBtBtn" onclick="openBluetoothSettings()" style="background:#1a4a8a;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">Bật Bluetooth</button>
-            </div>
-          </div>
-          <div class="confirm-btns" style="justify-content:center;">
-            <button class="btn-confirm" id="connRefreshBtn" onclick="checkConnectionAgain()" style="background:#1a4a8a;min-width:120px;">🔄 Kiểm tra lại</button>
-          </div>
-        </div>
+        <div id="connBt" class="conn-item pending">
+          <span class="conn-icon">🔵</span>
+          <div style="flex:1;"><div style="font-weight:600;">Bluetooth</div><div class="conn-status" id="connBtStatus">Đang kiểm tra...</div></div>
         </div>
 
-        <!-- ==================== LOGOUT CONFIRM ==================== -->
-        <div class="modal-overlay" id="logoutModal">
-        <div class="modal-content confirm-content">
+        <div id="connActions" style="display:none;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button id="connWifiBtn" onclick="openWifiSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">📶 Bật WiFi</button>
+          <button id="connBtBtn" onclick="openBluetoothSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">🔵 Bật Bluetooth</button>
+        </div>
+
+        <button id="connCheckBtn" onclick="checkConnectionAgain()" style="width:100%;margin-top:8px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">🔄 Kiểm tra lại</button>
+      </div>
+    </div>
+
+    <!-- ==================== LOGOUT CONFIRM ==================== -->
+    <div class="modal-overlay" id="logoutModal">
+      <div class="modal-content confirm-content">
         <h2>🔒 Đăng xuất</h2>
         <p>Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?</p>
         <div class="confirm-btns">
           <button class="btn-cancel" onclick="closeLogout()">Hủy</button>
           <button class="btn-confirm" onclick="doLogout()">Đăng xuất</button>
         </div>
-        </div>
-        </div>
+      </div>
+    </div>
 
-        <!-- Toast -->
-        <div class="toast" id="toast"></div>
-        </div>
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+  </div>
 
   <script src="app.js"></script>
   <script src="qrcode.min.js"></script>
-  </body>
+</body>
 </html>

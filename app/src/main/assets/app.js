@@ -15,6 +15,54 @@
 
     // ======================== BOOT SEQUENCE ========================
     window.addEventListener('DOMContentLoaded', () => {
+      // Load page content from fragment files (fallback to inline if unavailable)
+      const pages = ['login', 'home', 'search', 'profile', 'settings'];
+      const containers = {
+        'login': '#loginScreen',
+        'home':  '#mainApp .page-panel[data-page=home]',
+        'search': '#mainApp .page-panel[data-page=search]',
+        'profile': '#mainApp .page-panel[data-page=profile]',
+        'settings': '#mainApp .page-panel[data-page=settings]'
+      };
+
+      // Helper to load a page fragment
+      function loadPage(name) {
+        const qs = containers[name];
+        // Use getElementById for simple ID selectors, querySelector for CSS selectors
+        const el = qs.includes(' ') || qs.includes('[') || qs.includes('.')
+          ? document.querySelector(qs)
+          : document.getElementById(qs.replace(/^#/, ''));
+        if (!el) { console.warn('loadPage: container not found', name, 'selector:', qs); return; }
+
+        // Try native bridge first (synchronous, preferred)
+        if (typeof Android !== 'undefined' && Android.readAssetFile) {
+          try {
+            var html = Android.readAssetFile('pages/' + name + '.html');
+            if (html && html.length > 10) {
+              el.innerHTML = html;
+              console.log('loadPage OK:', name, html.length + 'b');
+              return;
+            }
+            console.warn('loadPage: short or empty result for', name);
+          } catch(e) { console.warn('readAssetFile error for', name, e.message || e); }
+        }
+
+        console.warn('loadPage FAILED for', name, '- Android object:', typeof Android);
+      }
+
+      // Load all pages in parallel, then add event bindings
+      pages.forEach(loadPage);
+
+      // Bind login enter-key handlers (after pages loaded)
+      function bindEnterKey() {
+        const pw = document.getElementById('loginPassword');
+        const un = document.getElementById('loginUsername');
+        if (pw) pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+        if (un) un.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+        if (!pw || !un) setTimeout(bindEnterKey, 50); // retry if pages not yet injected
+      }
+      bindEnterKey();
+
       // Check saved session
       const saved = localStorage.getItem('ncmems_session');
       if (saved) {
@@ -77,15 +125,6 @@
         }
       }, 1200);
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('loginPassword').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleLogin();
-      });
-      document.getElementById('loginUsername').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleLogin();
-      });
-    });
 
     // ======================== CONNECTION CHECK ========================
     function showConnectionCheck() {
@@ -197,8 +236,20 @@
 
       document.getElementById('loginScreen').classList.remove('active');
       document.getElementById('mainApp').classList.add('active');
-      document.getElementById('profileName').textContent = username;
-      document.getElementById('profileRole').textContent = role;
+
+      // Retry setting profile info if page content not yet loaded
+      function setProfile() {
+        const nameEl = document.getElementById('profileName');
+        const roleEl = document.getElementById('profileRole');
+        if (nameEl && roleEl) {
+          nameEl.textContent = username;
+          roleEl.textContent = role;
+        } else {
+          setTimeout(setProfile, 50);
+        }
+      }
+      setProfile();
+
       isLoggedIn = true;
     }
 
@@ -440,8 +491,6 @@
       const msg = document.getElementById('macValidationMsg');
       msg.style.display = 'none';
       document.getElementById('macDialogInputField').style.borderColor = '#ddd';
-      // Show delete button only if we have a saved MAC
-      document.getElementById('macDeleteBtn').style.display = saved ? 'block' : 'none';
     }
 
     function showMacDisplayMode(mac) {

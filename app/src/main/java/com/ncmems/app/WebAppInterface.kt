@@ -45,4 +45,13 @@ class WebAppInterface(private val context: Context) {
         }
         return 0
     }
+
+    @JavascriptInterface
+    fun readAssetFile(filename: String): String {
+        return try {
+            context.assets.open(filename).bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            "<!-- Error loading $filename: ${e.message} -->"
+        }
+    }
 }
