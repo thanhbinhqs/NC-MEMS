@@ -716,41 +716,13 @@
         }
       }
 
-      const canvas = document.getElementById('loginQRCanvas');
-      const ctx = canvas.getContext('2d');
-      // Explicit canvas size matching CSS
-      canvas.width = 140;
-      canvas.height = 140;
-
-      try {
-        const qr = qrcode(0, 'L');
-        qr.addData(qrText);
-        qr.make();
-
-        const cellSize = 5;
-        const margin = 2;
-        const dataURL = qr.createDataURL(cellSize, margin);
-
-        const img = new Image();
-        img.onload = function() {
-          ctx.clearRect(0, 0, 140, 140);
-          const x = Math.max(0, (140 - img.width) / 2);
-          const y = Math.max(0, (140 - img.height) / 2);
-          ctx.drawImage(img, x, y);
-        };
-        img.onerror = function() {
-          console.error('QR image failed to load');
-          ctx.fillStyle = '#eee';
-          ctx.fillRect(0, 0, 140, 140);
-        };
-        img.src = dataURL;
-      } catch(e) {
-        console.error('Login QR error:', e);
-        ctx.fillStyle = '#999';
-        ctx.font = '11px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('⚠️ Lỗi tạo QR', 70, 70);
-      }
+      // Draw Code 128 extended pairing barcode: <FNC3>PH11A{mac}
+      // Host 11 = HID BT Classic (scanner connects as keyboard)
+      // Host 16 = SSI BT Classic (for SDK apps)
+      const pairingData = Code128.pairingData(qrText, '11');
+      Code128.draw('loginPairingBarcode', pairingData, {
+        width: 200, height: 60, margin: 8
+      });
     }
 
     // ======================== TOAST ========================
