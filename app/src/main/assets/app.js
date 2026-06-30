@@ -12,6 +12,12 @@
       // Init scanner
       Scanner.init();
 
+      // Re-check ScannerBridge if added dynamically (permission-granted init)
+      if (typeof ScannerBridge !== 'undefined' && !window._scannerPollStarted) {
+        window._scannerPollStarted = true;
+        // scanner.js already handles polling, just re-init
+      }
+
       // Register global barcode handler
       Scanner.onBarcode(handleBarcodeScan);
 

@@ -1,5 +1,7 @@
 package com.ncmems.app
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -9,7 +11,9 @@ import android.webkit.JsResult
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 
 class MainActivity : AppCompatActivity() {
@@ -74,12 +78,49 @@ class MainActivity : AppCompatActivity() {
         // JavaScript interface for native features
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
-        // Scanner bridge (Bluetooth SPP/BLE)
+        // Load the HTML from assets (before scanner init — display login UI first)
+        webView.loadUrl("file:///android_asset/index.html")
+
+        // Init scanner and request Bluetooth permissions
+        initScannerWithPermissions()
+    }
+
+    private fun initScannerWithPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val permissions = mutableListOf<String>()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+            if (permissions.isNotEmpty()) {
+                btPermissionLauncher.launch(permissions.toTypedArray())
+                return // Scanner will init after permissions granted
+            }
+        }
+        // Permissions already granted or Android < 12
+        doInitScanner()
+    }
+
+    private fun doInitScanner() {
         scannerBridge = ScannerBridge(this)
         webView.addJavascriptInterface(scannerBridge, "ScannerBridge")
+        // Re-notify JS that scanner is ready
+        webView.evaluateJavascript(
+            "if(typeof ScannerBridge !== 'undefined') { Scanner.init(); renderLoginQR(); }", null)
 
-        // Load the HTML from assets
-        webView.loadUrl("file:///android_asset/index.html")
+    }
+
+    private val btPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val allGranted = result.values.all { it }
+        if (allGranted) {
+            doInitScanner()
+        }
     }
 
     override fun onResume() {
