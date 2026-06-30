@@ -13,6 +13,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // Zebra Scanner SDK requires API 24+
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -21,25 +24,34 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
+    }
+
+    // Support both old and new Android Gradle Plugin
+    packagingOptions {
+        resources {
+            excludes += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/LICENSE.txt")
+        }
     }
 }
 
 dependencies {
+    // AndroidX core (compatible with API 24+)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.multidex:multidex:2.0.1")
+
+    // WebView compatibility (required for older devices)
+    implementation("androidx.webkit:webkit:1.10.0")
 
     // Zebra Barcode Scanner SDK
-    // Download the AAR from https://www.zebra.com/us/en/support-downloads/software/scanner-software/scanner-sdk-for-android.html
-    // Place in app/libs/ and uncomment below:
+    // Download from: https://www.zebra.com/us/en/support-downloads/software/scanner-software/scanner-sdk-for-android.html
+    // Place AAR in app/libs/ and uncomment:
     // implementation(files("libs/barcode_scanner_library_v2.6.4.0-release.aar"))
-    //
-    // Alternative: add Zebra Maven repo (if available for your version):
-    // repositories { maven { url = uri("https://zebratech.jfrog.io/artifactory/EMDK-Android/") } }
-    // implementation("com.zebra:barcode-scanner-library:2.6.22.0")
 }

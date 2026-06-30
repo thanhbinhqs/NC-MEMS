@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import android.webkit.JsResult
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -61,7 +62,13 @@ class MainActivity : AppCompatActivity() {
             defaultTextEncodingName = "UTF-8"
         }
 
-        webView.webChromeClient = WebChromeClient()
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                // Suppress JS alerts for compatibility
+                result.confirm()
+                return true
+            }
+        }
         webView.webViewClient = WebViewClient()
 
         // JavaScript interface for native features
@@ -86,7 +93,12 @@ class MainActivity : AppCompatActivity() {
         if (webView.canGoBack()) {
             webView.goBack()
         } else {
-            super.onBackPressed()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                super.onBackPressed()
+            } else {
+                @Suppress("DEPRECATION")
+                super.onBackPressed()
+            }
         }
     }
 }
