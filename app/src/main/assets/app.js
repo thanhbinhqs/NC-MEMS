@@ -684,18 +684,18 @@
       showToast('🗑️ Đã xóa MAC');
       showMacInputMode();
     }
-    // ======================== LOGIN PAGE QR CODE ========================
+    // ======================== LOGIN PAGE MAC BARCODE ========================
     function renderLoginQR() {
       const container = document.getElementById('loginMacQR');
       const link = document.getElementById('macConfigLink');
       const hasMac = localStorage.getItem('ncmems_mac_address');
 
-      // Show phone's Bluetooth MAC (or device MAC if configured)
-      const phoneMac = Scanner.getPhoneMac();
-      const qrText = phoneMac || hasMac || 'NC MEMS';
-      const displayText = phoneMac || hasMac || '';
+      // Get the MAC to display (configured MAC > phone MAC)
+      const mac = hasMac || '';
+      const displayMac = mac;
 
-      if (!hasMac && !phoneMac) {
+      // If no MAC configured, hide barcode, show config link
+      if (!mac) {
         container.style.display = 'none';
         if (link) link.style.display = '';
         return;
@@ -703,7 +703,39 @@
 
       container.style.display = 'block';
       if (link) link.style.display = 'none';
-      document.getElementById('loginMacQRValue').textContent = displayText;
+      document.getElementById('loginMacQRValue').textContent = displayMac;
+
+      // Try Zebra SDK pairing barcode first
+      let barcodeShown = false;
+      if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getPairingBarcodeData) {
+        const sdkBarcode = ScannerBridge.getPairingBarcodeData();
+        if (sdkBarcode && sdkBarcode.length > 100) {
+          const canvas = document.getElementById('loginPairingBarcode');
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function() {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+              const x = (canvas.width - img.width * scale) / 2;
+              const y = (canvas.height - img.height * scale) / 2;
+              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+            };
+            img.src = sdkBarcode;
+            barcodeShown = true;
+          }
+        }
+      }
+
+      // Fallback: draw Code128 pairing barcode from MAC
+      if (!barcodeShown && mac.length >= 10) {
+        const pairingData = Code128.pairingData(mac, '11');
+        const maxWidth = Math.min(window.innerWidth - 40, 340);
+        Code128.draw('loginPairingBarcode', pairingData, {
+          width: maxWidth, height: 72, margin: 12
+        });
+        barcodeShown = true;
+      }
 
       // Show scanner connection status
       const status = document.getElementById('loginScannerStatus');
@@ -712,17 +744,9 @@
           status.textContent = '✅ Scanner: ' + Scanner.getConnectedDevice();
           status.style.color = '#2e7d32';
         } else {
-          status.textContent = ''; // Don't show anything when not connected
+          status.textContent = ''; // Don't show when not connected
         }
       }
-
-      // Draw Code 128 extended pairing barcode: <FNC3>PH11A{mac}
-      // Fill available width for maximum readability
-      const pairingData = Code128.pairingData(qrText, '11');
-      const maxWidth = Math.min(window.innerWidth - 40, 340);
-      Code128.draw('loginPairingBarcode', pairingData, {
-        width: maxWidth, height: 72, margin: 12
-      });
     }
 
     // ======================== TOAST ========================
