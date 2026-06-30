@@ -718,6 +718,8 @@
         if (sdkBarcode && sdkBarcode.length > 100) {
           const canvas = document.getElementById('loginPairingBarcode');
           if (canvas) {
+            canvas.height = 160;
+            canvas.style.height = '160px';
             const ctx = canvas.getContext('2d');
             const img = new Image();
             img.onload = function() {
@@ -733,15 +735,35 @@
         }
       }
 
-      // Fallback: draw Code128 extended pairing barcode (SSI protocol for DS8178)
+      // Fallback: QR code with extended pairing data
       if (!barcodeShown && mac.length >= 10) {
-        // Host 16 = SSI BT Classic (Non-Discoverable) — for DS8178 with SDK
-        // Host 11 = HID BT Classic — scanner acts as keyboard
-        const pairingData = Code128.pairingData(mac, '16');
-        const maxWidth = Math.min(window.innerWidth - 32, 340);
-        Code128.draw('loginPairingBarcode', pairingData, {
-          width: maxWidth, height: 80, margin: 8
-        });
+        // Format: PH16A{mac_nocolons}
+        // P = pairing header, H = host, 16 = SSI BT Classic, A = address
+        const pairingData = 'PH16A' + mac.replace(/[:\-]/g, '').toUpperCase();
+        const canvas = document.getElementById('loginPairingBarcode');
+        if (canvas) {
+          canvas.height = 160;
+          canvas.style.height = '160px';
+          const ctx = canvas.getContext('2d');
+          try {
+            const qr = qrcode(0, 'L');
+            qr.addData(pairingData);
+            qr.make();
+            const cellSize = 4;
+            const margin = 2;
+            const dataURL = qr.createDataURL(cellSize, margin);
+            const img = new Image();
+            img.onload = function() {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              const x = Math.max(0, (canvas.width - img.width) / 2);
+              const y = Math.max(0, (canvas.height - img.height) / 2);
+              ctx.drawImage(img, x, y);
+            };
+            img.src = dataURL;
+          } catch(e) {
+            console.error('QR error:', e);
+          }
+        }
         barcodeShown = true;
       }
 
