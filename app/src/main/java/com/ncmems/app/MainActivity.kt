@@ -120,6 +120,10 @@ class MainActivity : AppCompatActivity() {
         val allGranted = result.values.all { it }
         if (allGranted) {
             doInitScanner()
+        } else {
+            // Show toast-like feedback in WebView
+            webView.evaluateJavascript(
+                "showToast('⚠️ Cần cấp quyền Bluetooth để kết nối scanner')", null)
         }
     }
 

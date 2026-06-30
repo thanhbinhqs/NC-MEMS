@@ -733,12 +733,14 @@
         }
       }
 
-      // Fallback: draw Code128 pairing barcode from MAC
+      // Fallback: draw Code128 extended pairing barcode (SSI protocol for DS8178)
       if (!barcodeShown && mac.length >= 10) {
-        const pairingData = Code128.pairingData(mac, '11');
-        const maxWidth = Math.min(window.innerWidth - 40, 340);
+        // Host 16 = SSI BT Classic (Non-Discoverable) — for DS8178 with SDK
+        // Host 11 = HID BT Classic — scanner acts as keyboard
+        const pairingData = Code128.pairingData(mac, '16');
+        const maxWidth = Math.min(window.innerWidth - 32, 340);
         Code128.draw('loginPairingBarcode', pairingData, {
-          width: maxWidth, height: 72, margin: 12
+          width: maxWidth, height: 80, margin: 8
         });
         barcodeShown = true;
       }
