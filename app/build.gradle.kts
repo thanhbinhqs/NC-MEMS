@@ -47,10 +47,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.multidex:multidex:2.0.1")
 
-    // Zebra Scanner SDK (Scan-To-Connect)
-    implementation(files("libs/barcode_scanner_library_v2.7.3.0-release.aar"))
-
     // WebView compatibility (required for older devices)
     implementation("androidx.webkit:webkit:1.10.0")
-    implementation("androidx.lifecycle:lifecycle-process:2.6.2")
 }

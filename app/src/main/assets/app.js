@@ -9,25 +9,6 @@
 
     // ======================== BOOT SEQUENCE ========================
     window.addEventListener('DOMContentLoaded', () => {
-      // Init scanner
-      Scanner.init();
-
-      // Re-check ScannerBridge if added dynamically (permission-granted init)
-      if (typeof ScannerBridge !== 'undefined' && !window._scannerPollStarted) {
-        window._scannerPollStarted = true;
-        // scanner.js already handles polling, just re-init
-      }
-
-      // Register global barcode handler
-      Scanner.onBarcode(handleBarcodeScan);
-
-      // Show scan hint if scanner is available
-      if (Scanner.connected || typeof ScannerBridge !== 'undefined') {
-        const hint = document.getElementById('scanLoginHint');
-        if (hint) hint.style.display = 'block';
-        Scanner.start();
-      }
-
       // Load page content from fragment files (fallback to inline if unavailable)
       const pages = ['login', 'home', 'search', 'profile', 'settings'];
       const filenames = { 'search': 'data', 'settings': 'settings', 'login': 'login', 'home': 'home', 'profile': 'profile' };
@@ -110,63 +91,6 @@
         }, 500);
       }, 2500);
     });
-
-    // ======================== BARCODE SCAN HANDLER ========================
-    function handleBarcodeScan(data) {
-      const barcode = data.barcode;
-      const type = data.type;
-
-      // 1. Login QR: format "NCMEMS://username:password" or just UUID
-      if (barcode.startsWith('NCMEMS://')) {
-        const creds = barcode.replace('NCMEMS://', '');
-        if (creds.includes(':')) {
-          const parts = creds.split(':');
-          const userEl = document.getElementById('loginUsername');
-          const passEl = document.getElementById('loginPassword');
-          if (userEl && passEl) {
-            userEl.value = parts[0];
-            passEl.value = parts[1];
-            showToast('✅ QR đăng nhập: ' + parts[0]);
-            // Auto login after brief delay
-            setTimeout(handleLogin, 400);
-          }
-        }
-        return;
-      }
-
-      // 2. Not on login page — handle category-specific scan
-      if (currentPage === 'home' || currentPage === 'search') {
-        handleCategoryScan(barcode, type);
-        return;
-      }
-
-      // 3. Fallback: pass to current page handler
-      const handler = window['onBarcode_' + currentPage];
-      if (typeof handler === 'function') {
-        handler(barcode, type);
-      } else {
-        showToast('📄 Mã: ' + barcode);
-      }
-    }
-
-    function handleCategoryScan(barcode, type) {
-      // Try to determine category from barcode content
-      let category = null;
-      const upper = barcode.toUpperCase();
-
-      if (upper.startsWith('JIG') || upper.startsWith('JIG-')) category = 'JIG';
-      else if (upper.startsWith('PART') || upper.startsWith('PART-')) category = 'PART';
-      else if (upper.startsWith('ESD') || upper.startsWith('ESD-')) category = 'ESD';
-      else if (upper.startsWith('EQ') || upper.startsWith('PROD')) category = 'PRODUCTION';
-
-      if (category) {
-        showToast('📦 ' + category + ': ' + barcode);
-        // Open category page with scanned barcode filter
-        navigateTo(category);
-      } else {
-        showToast('📄 Mã: ' + barcode);
-      }
-    }
 
     // ======================== LOGIN ========================
     function togglePassword() {
@@ -423,85 +347,7 @@
             if (code) code.textContent = settings.language.toUpperCase() + ' ›';
           }
         }
-        // Update scanner status
-        updateScannerStatus();
       }).catch(() => {});
-    }
-
-    // ======================== SCANNER DIALOG ========================
-    function showScannerDialog() {
-      document.getElementById('scannerDialog').classList.add('open');
-      updateScannerStatus();
-    }
-    function closeScannerDialog() {
-      document.getElementById('scannerDialog').classList.remove('open');
-    }
-    document.getElementById('scannerDialog').addEventListener('click', function(e) {
-      if (e.target === this) closeScannerDialog();
-    });
-
-    function updateScannerStatus() {
-      const name = Scanner.getConnectedDevice();
-      const connected = Scanner.connected;
-      const desc = document.getElementById('scannerStatusDesc');
-      if (desc) desc.textContent = connected ? '✅ ' + name : 'Bluetooth SPP / BLE';
-    }
-
-    function scanForScanners() {
-      const btn = document.getElementById('scannerScanBtn');
-      const list = document.getElementById('scannerDeviceList');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang quét...';
-      list.innerHTML = '<div style="text-align:center;color:#1a4a8a;font-size:13px;padding:20px 0;">🔍 Đang tìm thiết bị Bluetooth...</div>';
-
-      Scanner.discover(devices => {
-        btn.disabled = false;
-        btn.textContent = '🔍 Quét thiết bị Bluetooth';
-
-        if (devices.length === 0) {
-          list.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0;">😕 Không tìm thấy thiết bị</div>';
-          return;
-        }
-
-        list.innerHTML = devices.map((d, i) => `
-          <div class="ble-device" onclick="connectToScanner('${d.address}')" style="cursor:pointer;animation:none;${i === devices.length - 1 ? 'border-bottom:none;' : ''}">
-            <div class="ble-icon">
-              <svg viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
-            </div>
-            <div class="ble-info">
-              <div class="name">${d.name}</div>
-              <div class="addr">${d.address} · ${d.type}</div>
-            </div>
-            <div class="ble-rssi"><strong>Kết nối</strong></div>
-          </div>
-        `).join('');
-      });
-    }
-
-    function connectToScanner(address) {
-      const list = document.getElementById('scannerDeviceList');
-      list.innerHTML = '<div style="text-align:center;color:#1a4a8a;font-size:13px;padding:20px 0;">🔄 Đang kết nối...</div>';
-      Scanner.connect(address);
-      setTimeout(() => {
-        updateScannerStatus();
-        const name = Scanner.getConnectedDevice();
-        if (name) {
-          document.getElementById('scannerConnectedName').textContent = name;
-          document.getElementById('scannerConnectedInfo').style.display = 'block';
-          list.innerHTML = '<div style="text-align:center;color:#2e7d32;font-size:13px;padding:20px 0;">✅ Đã kết nối ' + name + '</div>';
-          showToast('📡 Đã kết nối: ' + name);
-        } else {
-          list.innerHTML = '<div style="text-align:center;color:#d32f2f;font-size:13px;padding:20px 0;">❌ Kết nối thất bại</div>';
-        }
-      }, 3000);
-    }
-
-    function disconnectScanner() {
-      Scanner.disconnect();
-      document.getElementById('scannerConnectedInfo').style.display = 'none';
-      document.getElementById('scannerDeviceList').innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0;">🔌 Đã ngắt kết nối</div>';
-      updateScannerStatus();
-      showToast('🔌 Đã ngắt kết nối scanner');
     }
 
     // ======================== LOGOUT ========================
@@ -690,18 +536,13 @@
       showToast('🗑️ Đã xóa MAC');
       showMacInputMode();
     }
-    // ======================== LOGIN PAGE MAC BARCODE ========================
+    // ======================== LOGIN PAGE QR CODE ========================
     function renderLoginQR() {
       const container = document.getElementById('loginMacQR');
       const link = document.getElementById('macConfigLink');
-      const hasMac = localStorage.getItem('ncmems_mac_address');
+      const saved = localStorage.getItem('ncmems_mac_address');
 
-      // Get the MAC to display (configured MAC > phone MAC)
-      const mac = hasMac || '';
-      const displayMac = mac;
-
-      // If no MAC configured, hide barcode, show config link
-      if (!mac) {
+      if (!saved || !saved.trim()) {
         container.style.display = 'none';
         if (link) link.style.display = '';
         return;
@@ -709,89 +550,40 @@
 
       container.style.display = 'block';
       if (link) link.style.display = 'none';
-      document.getElementById('loginMacQRValue').textContent = displayMac;
+      document.getElementById('loginMacQRValue').textContent = saved;
 
-      // Try Zebra SDK pairing barcode first
-      let barcodeShown = false;
-      if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getPairingBarcodeData) {
-        const sdkBarcode = ScannerBridge.getPairingBarcodeData();
-        if (sdkBarcode && sdkBarcode.length > 100) {
-          const canvas = document.getElementById('loginPairingBarcode');
-          if (canvas) {
-            canvas.height = 80;
-            canvas.style.height = '80px';
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = function() {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-              const x = (canvas.width - img.width * scale) / 2;
-              const y = (canvas.height - img.height * scale) / 2;
-              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-            };
-            img.src = sdkBarcode;
-            barcodeShown = true;
-          }
-        }
-      }
+      const canvas = document.getElementById('loginQRCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = 140;
+      canvas.height = 140;
 
-      // Fallback: Code128 extended pairing barcode
-      if (!barcodeShown && mac.length >= 10) {
-        // Data format: PH16A{mac_nocolons}
-        // P = pairing header, H = host, 16 = SSI BT Classic, A = address
-        const pairingData = 'PH16A' + mac.replace(/[:\-]/g, '').toUpperCase();
-        const canvas = document.getElementById('loginPairingBarcode');
-        if (canvas) {
-          canvas.height = 80;
-          canvas.style.height = '80px';
-          try {
-            if (typeof JsBarcode !== 'undefined') {
-              JsBarcode(canvas, pairingData, {
-                format: 'CODE128',
-                width: 2,
-                height: 60,
-                displayValue: true,
-                fontSize: 11,
-                font: 'monospace',
-                margin: 8,
-                background: '#ffffff',
-                lineColor: '#000000',
-                valid: function() {}
-              });
-            } else {
-              // Fallback: draw QR code if JsBarcode not available
-              canvas.height = 160;
-              canvas.style.height = '160px';
-              const ctx = canvas.getContext('2d');
-              const qr = qrcode(0, 'L');
-              qr.addData(pairingData);
-              qr.make();
-              const dataURL = qr.createDataURL(4, 2);
-              const img = new Image();
-              img.onload = function() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const x = Math.max(0, (canvas.width - img.width) / 2);
-                const y = Math.max(0, (canvas.height - img.height) / 2);
-                ctx.drawImage(img, x, y);
-              };
-              img.src = dataURL;
-            }
-          } catch(e) {
-            console.error('Barcode error:', e);
-          }
-        }
-        barcodeShown = true;
-      }
-
-      // Show scanner connection status
-      const status = document.getElementById('loginScannerStatus');
-      if (status) {
-        if (Scanner.connected) {
-          status.textContent = '✅ Scanner: ' + Scanner.getConnectedDevice();
-          status.style.color = '#2e7d32';
-        } else {
-          status.textContent = ''; // Don't show when not connected
-        }
+      try {
+        const qr = qrcode(0, 'L');
+        qr.addData(saved);
+        qr.make();
+        const cellSize = 5;
+        const margin = 2;
+        const dataURL = qr.createDataURL(cellSize, margin);
+        const img = new Image();
+        img.onload = function() {
+          ctx.clearRect(0, 0, 140, 140);
+          const x = Math.max(0, (140 - img.width) / 2);
+          const y = Math.max(0, (140 - img.height) / 2);
+          ctx.drawImage(img, x, y);
+        };
+        img.onerror = function() {
+          console.error('QR image failed to load');
+          ctx.fillStyle = '#eee';
+          ctx.fillRect(0, 0, 140, 140);
+        };
+        img.src = dataURL;
+      } catch(e) {
+        console.error('Login QR error:', e);
+        ctx.fillStyle = '#999';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚠️ Lỗi tạo QR', 70, 70);
       }
     }
 

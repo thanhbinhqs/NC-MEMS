@@ -41,16 +41,14 @@
 
         <div class="login-error" id="loginError" data-i18n="login.error">Sai tên đăng nhập hoặc mật khẩu</div>
 
-        <!-- Scan hint for Zebra scanner -->
-        <div class="scan-login-hint" id="scanLoginHint" style="display:none;font-size:11px;color:#888;text-align:center;margin:4px 0;">
-          📷 Quét QR hoặc barcode để đăng nhập
-        </div>
-
-        <!-- LOGIN PAGE PAIRING BARCODE -->
-        <div id="loginMacQR" style="display:none;text-align:center;margin:6px 0;">
-          <div id="loginMacQRValue" style="font-family:monospace;font-size:10px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:4px;cursor:pointer;" onclick="toggleMacConfig()" title="Nhấn để sửa MAC"></div>
-          <canvas id="loginPairingBarcode" style="width:100%;max-width:340px;height:80px;border-radius:8px;background:#fff;display:block;margin:0 auto;"></canvas>
-          <div id="loginScannerStatus" style="font-size:10px;margin-top:4px;"></div>
+        <!-- LOGIN PAGE QR CODE -->
+        <div id="loginMacQR" style="display:none;text-align:center;margin:4px 0 2px;">
+          <div id="loginMacQRValue" style="font-family:monospace;font-size:11px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:4px;cursor:pointer;" onclick="toggleMacConfig()" title="Nhấn để sửa MAC"></div>
+          <div style="display:inline-block;position:relative;">
+            <canvas id="loginQRCanvas" style="width:140px;height:140px;border-radius:8px;background:#fff;"></canvas>
+            <button onclick="toggleMacConfig()" title="Sửa địa chỉ MAC"
+              style="position:absolute;top:-6px;right:-6px;background:#1a4a8a;color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);z-index:5;">✎</button>
+          </div>
         </div>
 
         <!-- MAC config link (only visible when no MAC saved) -->

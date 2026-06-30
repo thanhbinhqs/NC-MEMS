@@ -150,39 +150,21 @@
       </div>
     </div>
 
-    <!-- ==================== SCANNER DIALOG ==================== -->
-    <div class="modal-overlay" id="scannerDialog">
-      <div class="modal-content confirm-content" style="max-width:360px;padding:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 style="margin:0;font-size:16px;">📡 Kết nối Scanner</h2>
-          <button onclick="closeScannerDialog()" class="modal-close">✕</button>
-        </div>
-
-        <!-- Connected device info -->
-        <div id="scannerConnectedInfo" style="display:none;background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:12px;">
-          <div style="font-weight:600;color:#2e7d32;">✅ Đã kết nối</div>
-          <div id="scannerConnectedName" style="font-size:13px;color:#555;margin-top:2px;"></div>
-          <button onclick="disconnectScanner()" style="margin-top:8px;background:#d32f2f;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;">🔌 Ngắt kết nối</button>
-        </div>
-
-        <!-- Scan button -->
-        <button id="scannerScanBtn" onclick="scanForScanners()" style="width:100%;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px;">🔍 Quét thiết bị Bluetooth</button>
-
-        <!-- Device list -->
-        <div id="scannerDeviceList" style="max-height:240px;overflow-y:auto;">
-          <div style="text-align:center;color:#999;font-size:13px;padding:20px 0;">Nhấn "Quét thiết bị" để tìm scanner</div>
-        </div>
-        <div style="font-size:10px;color:#aaa;text-align:center;margin-top:8px;">DS8178: Quét mã vạch trên login page để kết nối tự động</div>
+    <!-- ==================== LANGUAGE PICKER ==================== -->
+    <div class="modal-overlay" id="languageDialog">
+      <div class="modal-content confirm-content" style="max-width:300px;">
+        <h2 style="font-size:15px;" data-i18n="lang.picker_title">🌐 Chọn ngôn ngữ</h2>
+        <div class="lang-option" data-lang="vi" onclick="setLanguage('vi','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
+        <div class="lang-option" data-lang="en" onclick="setLanguage('en','English')">🇬🇧 English</div>
+        <div class="lang-option" data-lang="ja" onclick="setLanguage('ja','日本語')">🇯🇵 日本語</div>
+        <div class="lang-option" data-lang="ko" onclick="setLanguage('ko','한국어')" style="border-bottom:none;">🇰🇷 한국어</div>
       </div>
     </div>
 
-    <!-- Toast -->
+    <!-- ==================== TOAST ==================== -->
     <div class="toast" id="toast"></div>
   </div>
 
-  <script src="jsbarcode.min.js"></script>
-  <script src="code128.js"></script>
-  <script src="scanner.js"></script>
   <script src="lang.js"></script>
   <script src="api-service.js"></script>
   <script src="app.js"></script>
