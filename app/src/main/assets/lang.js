@@ -137,6 +137,11 @@ const TRANSLATIONS = {
   'toast.dark_off':       { vi: '☀️ Chế độ sáng', en: '☀️ Light mode', ja: '☀️ ライトモード', ko: '☀️ 라이트 모드' },
   'toast.lang_changed':   { vi: '🌐 Ngôn ngữ', en: '🌐 Language', ja: '🌐 言語', ko: '🌐 언어' },
   'toast.nav_cat':        { vi: '📂 Đang mở', en: '📂 Opening', ja: '📂 開いています', ko: '📂 여는 중' },
+
+  // ── Navigation Bar ─────────────────────────────────────────
+  'nav.home':             { vi: 'Trang chủ', en: 'Home', ja: 'ホーム', ko: '홈' },
+  'nav.profile':          { vi: 'Hồ sơ', en: 'Profile', ja: 'プロフィール', ko: '프로필' },
+  'nav.settings':         { vi: 'Cài đặt', en: 'Settings', ja: '設定', ko: '설정' },
 };
 
 // ======================== i18n ENGINE ========================
