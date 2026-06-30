@@ -67,6 +67,10 @@ class MainActivity : AppCompatActivity() {
         // JavaScript interface for native features
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
+        // Scanner bridge
+        val scannerBridge = ScannerBridge(this)
+        webView.addJavascriptInterface(scannerBridge, "ScannerBridge")
+
         // Load the HTML from assets
         webView.loadUrl("file:///android_asset/index.html")
     }

@@ -9,6 +9,19 @@
 
     // ======================== BOOT SEQUENCE ========================
     window.addEventListener('DOMContentLoaded', () => {
+      // Init scanner
+      Scanner.init();
+
+      // Register global barcode handler
+      Scanner.onBarcode(handleBarcodeScan);
+
+      // Show scan hint if scanner is available
+      if (Scanner.connected || typeof ScannerBridge !== 'undefined') {
+        const hint = document.getElementById('scanLoginHint');
+        if (hint) hint.style.display = 'block';
+        Scanner.start();
+      }
+
       // Load page content from fragment files (fallback to inline if unavailable)
       const pages = ['login', 'home', 'search', 'profile', 'settings'];
       const filenames = { 'search': 'data', 'settings': 'settings', 'login': 'login', 'home': 'home', 'profile': 'profile' };
@@ -91,6 +104,63 @@
         }, 500);
       }, 2500);
     });
+
+    // ======================== BARCODE SCAN HANDLER ========================
+    function handleBarcodeScan(data) {
+      const barcode = data.barcode;
+      const type = data.type;
+
+      // 1. Login QR: format "NCMEMS://username:password" or just UUID
+      if (barcode.startsWith('NCMEMS://')) {
+        const creds = barcode.replace('NCMEMS://', '');
+        if (creds.includes(':')) {
+          const parts = creds.split(':');
+          const userEl = document.getElementById('loginUsername');
+          const passEl = document.getElementById('loginPassword');
+          if (userEl && passEl) {
+            userEl.value = parts[0];
+            passEl.value = parts[1];
+            showToast('✅ QR đăng nhập: ' + parts[0]);
+            // Auto login after brief delay
+            setTimeout(handleLogin, 400);
+          }
+        }
+        return;
+      }
+
+      // 2. Not on login page — handle category-specific scan
+      if (currentPage === 'home' || currentPage === 'search') {
+        handleCategoryScan(barcode, type);
+        return;
+      }
+
+      // 3. Fallback: pass to current page handler
+      const handler = window['onBarcode_' + currentPage];
+      if (typeof handler === 'function') {
+        handler(barcode, type);
+      } else {
+        showToast('📄 Mã: ' + barcode);
+      }
+    }
+
+    function handleCategoryScan(barcode, type) {
+      // Try to determine category from barcode content
+      let category = null;
+      const upper = barcode.toUpperCase();
+
+      if (upper.startsWith('JIG') || upper.startsWith('JIG-')) category = 'JIG';
+      else if (upper.startsWith('PART') || upper.startsWith('PART-')) category = 'PART';
+      else if (upper.startsWith('ESD') || upper.startsWith('ESD-')) category = 'ESD';
+      else if (upper.startsWith('EQ') || upper.startsWith('PROD')) category = 'PRODUCTION';
+
+      if (category) {
+        showToast('📦 ' + category + ': ' + barcode);
+        // Open category page with scanned barcode filter
+        navigateTo(category);
+      } else {
+        showToast('📄 Mã: ' + barcode);
+      }
+    }
 
     // ======================== LOGIN ========================
     function togglePassword() {
