@@ -236,4 +236,7 @@ function initLanguage(settings) {
   const lang = (settings && settings.language) || localStorage.getItem('ncmems_language') || 'vi';
   _currentLang = lang;
   localStorage.setItem('ncmems_language', lang);
+  // Update settings page language code immediately
+  const codeEl = document.getElementById('settingsLangCode');
+  if (codeEl) codeEl.textContent = (LANGUAGES[lang]?.code || 'VI');
 }
