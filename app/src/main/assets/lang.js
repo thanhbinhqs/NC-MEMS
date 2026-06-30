@@ -175,19 +175,34 @@ function setLanguage(lang, label) {
   showToast(__(`toast.lang_changed`) + ': ' + (descMap[lang] || lang));
 }
 
+// Open / close language picker dialog
+function showLanguagePicker() {
+  document.getElementById('languageDialog').classList.add('open');
+}
+function closeLanguagePicker() {
+  document.getElementById('languageDialog').classList.remove('open');
+}
+
 // Apply translations to all elements with data-i18n attributes
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const translation = __(key);
     if (translation && !translation.startsWith('⁇')) {
-      // Handle different element types
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
         if (el.hasAttribute('placeholder')) el.placeholder = translation;
         else el.value = translation;
       } else {
         el.textContent = translation;
       }
+    }
+  });
+  // Also handle data-i18n-placeholder for placeholder-only translations
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const translation = __(key);
+    if (translation && !translation.startsWith('⁇')) {
+      el.placeholder = translation;
     }
   });
 }
