@@ -718,8 +718,8 @@
         if (sdkBarcode && sdkBarcode.length > 100) {
           const canvas = document.getElementById('loginPairingBarcode');
           if (canvas) {
-            canvas.height = 160;
-            canvas.style.height = '160px';
+            canvas.height = 80;
+            canvas.style.height = '80px';
             const ctx = canvas.getContext('2d');
             const img = new Image();
             img.onload = function() {
