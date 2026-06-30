@@ -74,10 +74,9 @@ class MainActivity : AppCompatActivity() {
         // JavaScript interface for native features
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
-        // Scanner bridge (DataWedge)
+        // Scanner bridge (Bluetooth SPP/BLE)
         scannerBridge = ScannerBridge(this)
         webView.addJavascriptInterface(scannerBridge, "ScannerBridge")
-        scannerBridge.register(this)
 
         // Load the HTML from assets
         webView.loadUrl("file:///android_asset/index.html")
@@ -88,16 +87,12 @@ class MainActivity : AppCompatActivity() {
         if (::webView.isInitialized) {
             webView.evaluateJavascript("window.checkConnectionAgain?.()", null)
         }
-        // Re-register scanner receiver in case it was killed
-        if (::scannerBridge.isInitialized) {
-            scannerBridge.register(this)
-        }
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
         if (::scannerBridge.isInitialized) {
-            scannerBridge.unregister(this)
+            scannerBridge.destroy()
         }
     }
 

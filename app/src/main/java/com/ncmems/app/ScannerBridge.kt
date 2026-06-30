@@ -1,96 +1,51 @@
 package com.ncmems.app
 
-import android.content.BroadcastReceiver
+import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
-import android.os.Bundle
 import android.util.Log
 import android.webkit.JavascriptInterface
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Bridge between Zebra DataWedge scanner events and WebView JavaScript.
- * DataWedge is pre-installed on all Zebra Android devices — no SDK AAR needed.
- *
- * DataWedge Protocol:
- *   - Enable:     broadcast ACTION=com.symbol.datawedge.api.ACTION with extra
- *                 "com.symbol.datawedge.api.SOFT_SCAN_TRIGGER" = START_STOP
- *   - Disable:    broadcast with SOFT_SCAN_TRIGGER = STOP
- *   - Receive:    registerReceiver for action "com.zebra.barcode.SCANNED"
- *   - Barcode:    intent extras: "com.symbol.datawedge.data_string" (String),
- *                 "com.symbol.datawedge.label_type" (String)
- *
- * Reference:  https://techdocs.zebra.com/datawedge/latest/guide/api/
+ * Bridge between Bluetooth scanner (SPP/BLE) and WebView JavaScript.
+ * Uses BtScannerService for all Bluetooth connectivity.
  */
 class ScannerBridge(private val context: Context) {
 
     companion object {
         private const val TAG = "ScannerBridge"
-        private const val ACTION_DATAWEDGE = "com.symbol.datawedge.api.ACTION"
-        private const val ACTION_SCANNED = "com.zebra.barcode.SCANNED"
-        private const val EXTRA_DATA = "com.symbol.datawedge.data_string"
-        private const val EXTRA_LABEL = "com.symbol.datawedge.label_type"
-        private const val EXTRA_SOFT_SCAN = "com.symbol.datawedge.api.SOFT_SCAN_TRIGGER"
-        private const val ACTION_RESULT = "com.symbol.datawedge.api.RESULT_ACTION"
-
         var lastBarcode: String = ""
             private set
         var lastBarcodeType: String = ""
             private set
         var isScannerConnected: Boolean = false
             private set
+        var connectedDeviceName: String = ""
+            private set
     }
 
-    private var receiverRegistered = false
-    private var jsCallback: String = "window.onBarcodeScanned"
+    private val btService = BtScannerService(context)
 
-    // DataWedge barcode receiver
-    private val barcodeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(ctx: Context, intent: Intent) {
-            when (intent.action) {
-                ACTION_SCANNED -> {
-                    val barcode = intent.getStringExtra(EXTRA_DATA) ?: return
-                    val labelType = intent.getStringExtra(EXTRA_LABEL) ?: "UNKNOWN"
-                    lastBarcode = barcode
-                    lastBarcodeType = labelType
-                    isScannerConnected = true
-                    Log.d(TAG, "Barcode: [$labelType] $barcode")
-                }
-                ACTION_RESULT -> {
-                    // DataWedge command result — check connection
-                    isScannerConnected = true
-                }
+    init {
+        btService.setCallback(object : BtScannerService.ScannerCallback {
+            override fun onBarcodeReceived(barcode: String, type: String) {
+                lastBarcode = barcode
+                lastBarcodeType = type
+                isScannerConnected = true
+                Log.d(TAG, "Barcode: [$type] $barcode")
             }
-        }
-    }
 
-    // ── Lifecycle ──────────────────────────────────────────────
-    fun register(context: Context) {
-        if (receiverRegistered) return
-        val filter = IntentFilter().apply {
-            addAction(ACTION_SCANNED)
-            addAction(ACTION_RESULT)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(barcodeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            context.registerReceiver(barcodeReceiver, filter)
-        }
-        receiverRegistered = true
-        Log.d(TAG, "DataWedge receiver registered")
-    }
+            override fun onConnectionStateChanged(connected: Boolean, deviceName: String) {
+                isScannerConnected = connected
+                connectedDeviceName = if (connected) deviceName else ""
+                Log.d(TAG, "Scanner ${if (connected) "connected" else "disconnected"}: $deviceName")
+            }
 
-    fun unregister(context: Context) {
-        if (!receiverRegistered) return
-        try {
-            context.unregisterReceiver(barcodeReceiver)
-        } catch (e: Exception) {
-            Log.w(TAG, "unregister error: ${e.message}")
-        }
-        receiverRegistered = false
+            override fun onError(message: String) {
+                Log.w(TAG, "Error: $message")
+            }
+        })
     }
 
     // ── JS Interface ───────────────────────────────────────────
@@ -104,26 +59,60 @@ class ScannerBridge(private val context: Context) {
     fun isConnected(): Boolean = isScannerConnected
 
     @JavascriptInterface
-    fun setJsCallback(name: String) {
-        jsCallback = name
+    fun getConnectedDeviceName(): String = connectedDeviceName
+
+    @JavascriptInterface
+    fun startDiscovery(): String {
+        btService.startScan(8000)
+        return "scanning"
+    }
+
+    @JavascriptInterface
+    fun stopDiscovery() {
+        btService.stopScan()
+    }
+
+    @JavascriptInterface
+    fun getDiscoveredDevices(): String {
+        val arr = JSONArray()
+        btService.discoveredDevices.forEach { device ->
+            arr.put(JSONObject().apply {
+                put("name", device.name ?: "Unknown")
+                put("address", device.address)
+                put("type", when (device.type) {
+                    BluetoothDevice.DEVICE_TYPE_CLASSIC -> "CLASSIC"
+                    BluetoothDevice.DEVICE_TYPE_LE -> "BLE"
+                    BluetoothDevice.DEVICE_TYPE_DUAL -> "DUAL"
+                    else -> "UNKNOWN"
+                })
+            })
+        }
+        return arr.toString()
+    }
+
+    @JavascriptInterface
+    fun connectToDevice(address: String) {
+        val device = btService.discoveredDevices.find { it.address == address }
+        if (device != null) {
+            btService.connect(device)
+        } else {
+            Log.w(TAG, "Device $address not found in discovered list")
+        }
+    }
+
+    @JavascriptInterface
+    fun disconnectDevice() {
+        btService.disconnect()
     }
 
     @JavascriptInterface
     fun startScanning() {
-        val intent = Intent(ACTION_DATAWEDGE).apply {
-            putExtra(EXTRA_SOFT_SCAN, "START")
-        }
-        context.sendBroadcast(intent)
-        Log.d(TAG, "DataWedge scan START")
+        // Scanner is already receiving data via BtScannerService callbacks
     }
 
     @JavascriptInterface
     fun stopScanning() {
-        val intent = Intent(ACTION_DATAWEDGE).apply {
-            putExtra(EXTRA_SOFT_SCAN, "STOP")
-        }
-        context.sendBroadcast(intent)
-        Log.d(TAG, "DataWedge scan STOP")
+        // Scanner keeps running via BtScannerService
     }
 
     @JavascriptInterface
@@ -134,36 +123,17 @@ class ScannerBridge(private val context: Context) {
             put("beepOnScan", false)
             put("vibrateOnScan", false)
             put("loginQRFormat", "NCMEMS://")
-            put("scannerType", "DataWedge")
+            put("scannerType", "BLUETOOTH_SPP_BLE")
         }.toString()
     }
 
     @JavascriptInterface
     fun setConfig(json: String) {
-        // DataWedge uses profiles — for now just a stub
         Log.d(TAG, "setConfig: $json")
     }
 
-    @JavascriptInterface
-    fun createDataWedgeProfile() {
-        // Auto-create a DataWedge profile for NC MEMS
-        val profileIntent = Intent(ACTION_DATAWEDGE).apply {
-            putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "NC MEMS")
-        }
-        context.sendBroadcast(profileIntent)
-
-        // Configure profile: enable scanning, set to barcode mode
-        val configBundle = Bundle().apply {
-            putString("PROFILE_NAME", "NC MEMS")
-            putString("PROFILE_ENABLED", "true")
-            putString("CONFIG_MODE", "UPDATE")
-            putString("PLUGIN_NAME", "BARCODE")
-            putString("PLUGIN_CONFIG", """{"scanner_selection":"auto","scanner_input_enabled":true}""")
-        }
-        val configIntent = Intent(ACTION_DATAWEDGE).apply {
-            putExtra("com.symbol.datawedge.api.SET_CONFIG", configBundle)
-        }
-        context.sendBroadcast(configIntent)
-        Log.d(TAG, "DataWedge profile created: NC MEMS")
+    // ── Lifecycle ──────────────────────────────────────────────
+    fun destroy() {
+        btService.destroy()
     }
 }

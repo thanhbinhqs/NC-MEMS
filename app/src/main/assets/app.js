@@ -417,7 +417,85 @@
             if (code) code.textContent = settings.language.toUpperCase() + ' ›';
           }
         }
+        // Update scanner status
+        updateScannerStatus();
       }).catch(() => {});
+    }
+
+    // ======================== SCANNER DIALOG ========================
+    function showScannerDialog() {
+      document.getElementById('scannerDialog').classList.add('open');
+      updateScannerStatus();
+    }
+    function closeScannerDialog() {
+      document.getElementById('scannerDialog').classList.remove('open');
+    }
+    document.getElementById('scannerDialog').addEventListener('click', function(e) {
+      if (e.target === this) closeScannerDialog();
+    });
+
+    function updateScannerStatus() {
+      const name = Scanner.getConnectedDevice();
+      const connected = Scanner.connected;
+      const desc = document.getElementById('scannerStatusDesc');
+      if (desc) desc.textContent = connected ? '✅ ' + name : 'Bluetooth SPP / BLE';
+    }
+
+    function scanForScanners() {
+      const btn = document.getElementById('scannerScanBtn');
+      const list = document.getElementById('scannerDeviceList');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang quét...';
+      list.innerHTML = '<div style="text-align:center;color:#1a4a8a;font-size:13px;padding:20px 0;">🔍 Đang tìm thiết bị Bluetooth...</div>';
+
+      Scanner.discover(devices => {
+        btn.disabled = false;
+        btn.textContent = '🔍 Quét thiết bị Bluetooth';
+
+        if (devices.length === 0) {
+          list.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0;">😕 Không tìm thấy thiết bị</div>';
+          return;
+        }
+
+        list.innerHTML = devices.map((d, i) => `
+          <div class="ble-device" onclick="connectToScanner('${d.address}')" style="cursor:pointer;animation:none;${i === devices.length - 1 ? 'border-bottom:none;' : ''}">
+            <div class="ble-icon">
+              <svg viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg>
+            </div>
+            <div class="ble-info">
+              <div class="name">${d.name}</div>
+              <div class="addr">${d.address} · ${d.type}</div>
+            </div>
+            <div class="ble-rssi"><strong>Kết nối</strong></div>
+          </div>
+        `).join('');
+      });
+    }
+
+    function connectToScanner(address) {
+      const list = document.getElementById('scannerDeviceList');
+      list.innerHTML = '<div style="text-align:center;color:#1a4a8a;font-size:13px;padding:20px 0;">🔄 Đang kết nối...</div>';
+      Scanner.connect(address);
+      setTimeout(() => {
+        updateScannerStatus();
+        const name = Scanner.getConnectedDevice();
+        if (name) {
+          document.getElementById('scannerConnectedName').textContent = name;
+          document.getElementById('scannerConnectedInfo').style.display = 'block';
+          list.innerHTML = '<div style="text-align:center;color:#2e7d32;font-size:13px;padding:20px 0;">✅ Đã kết nối ' + name + '</div>';
+          showToast('📡 Đã kết nối: ' + name);
+        } else {
+          list.innerHTML = '<div style="text-align:center;color:#d32f2f;font-size:13px;padding:20px 0;">❌ Kết nối thất bại</div>';
+        }
+      }, 3000);
+    }
+
+    function disconnectScanner() {
+      Scanner.disconnect();
+      document.getElementById('scannerConnectedInfo').style.display = 'none';
+      document.getElementById('scannerDeviceList').innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:20px 0;">🔌 Đã ngắt kết nối</div>';
+      updateScannerStatus();
+      showToast('🔌 Đã ngắt kết nối scanner');
     }
 
     // ======================== LOGOUT ========================

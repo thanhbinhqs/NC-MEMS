@@ -131,6 +131,35 @@ const Scanner = (() => {
     enableMock();
   }
 
+  // ── Scanner discovery & connection helpers ──────────────────
+  function discover(callback) {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.startDiscovery) {
+      callback([]);
+      return;
+    }
+    ScannerBridge.startDiscovery();
+    setTimeout(() => {
+      const raw = ScannerBridge.getDiscoveredDevices();
+      const devices = JSON.parse(raw || '[]');
+      callback(devices);
+    }, 8000);
+  }
+
+  function connect(address) {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.connectToDevice) return;
+    ScannerBridge.connectToDevice(address);
+  }
+
+  function disconnect() {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.disconnectDevice) return;
+    ScannerBridge.disconnectDevice();
+  }
+
+  function getConnectedDevice() {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getConnectedDeviceName) return '';
+    return ScannerBridge.getConnectedDeviceName();
+  }
+
   // ── Public interface ────────────────────────────────────────
   return {
     get connected() { return _connected; },
@@ -142,6 +171,10 @@ const Scanner = (() => {
     onBarcode,
     offBarcode,
     setConfig,
+    discover,
+    connect,
+    disconnect,
+    getConnectedDevice,
     _onBarcodeReceived,  // for native callback
   };
 })();
