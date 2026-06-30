@@ -2,121 +2,163 @@ package com.ncmems.app
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.util.Base64
 import android.util.Log
+import android.view.View
 import android.webkit.JavascriptInterface
+import com.zebra.scannercontrol.BarCodeView
+import com.zebra.scannercontrol.DCSSDKDefs
+import com.zebra.scannercontrol.DCSScannerInfo
+import com.zebra.scannercontrol.IDcsSdkApiDelegate
+import com.zebra.scannercontrol.SDKHandler
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
 /**
- * ScannerBridge — manages Zebra scanner connection and barcode events.
+ * ScannerBridge — Scan-To-Connect via Zebra Scanner SDK (v2.6.19.0).
  *
- * MODE 1: Zebra Scanner SDK (Scan-To-Connect)
- *   Requires barcode_scanner_library AAR from Zebra.
- *   SDK initializes → generates pairing barcode → scanner scans it →
- *   auto-connects → barcode data received via SDK callback.
- *
- * MODE 2: Bluetooth Direct (fallback)
- *   Uses BtScannerService for SPP/BLE/HID connections.
- *   Phone connects to scanner by MAC, or scanner connects to phone.
- *
- * The app works in MODE 2 by default. To enable MODE 1:
- *   1. Download AAR from https://www.zebra.com/us/en/support-downloads/software/scanner-software/scanner-sdk-for-android.html
- *   2. Place in app/libs/
- *   3. Uncomment dependency in app/build.gradle.kts
- *   4. Uncomment // USE_ZEBRA_SDK in this file
+ * Flow:
+ *   1. SDKHandler(context, true)  // true = STC enabled
+ *   2. dcssdkGetPairingBarcode(SSI_BT_SSI_SLAVE, KEEP_CURRENT) → BarCodeView
+ *   3. Render BarCodeView to Bitmap → base64 → WebView as data:image
+ *   4. DS8178 scans pairing barcode → auto-connects via SSI
+ *   5. callback dcssdkEventBarcode → data forwarded to JS
  */
-class ScannerBridge(private val context: Context) {
+class ScannerBridge(private val context: Context) : IDcsSdkApiDelegate {
 
     companion object {
         private const val TAG = "ScannerBridge"
-        // Set to true when Zebra SDK AAR is available
-        private const val USE_ZEBRA_SDK = false
 
-        var lastBarcode: String = ""
+        // Public state for JS polling
+        @Volatile var lastBarcode: String = ""
             private set
-        var lastBarcodeType: String = ""
+        @Volatile var lastBarcodeType: String = ""
             private set
-        var isScannerConnected: Boolean = false
+        @Volatile var isScannerConnected: Boolean = false
             private set
-        var connectedDeviceName: String = ""
+        @Volatile var connectedDeviceName: String = ""
             private set
-        var pairingBarcodeData: String = "" // base64 PNG of pairing barcode
+        @Volatile var pairingBarcodeData: String = "" // "data:image/png;base64,..."
             private set
     }
 
-    // Fallback Bluetooth service
-    private val btService = if (!USE_ZEBRA_SDK) BtScannerService(context) else null
+    private var sdkHandler: SDKHandler? = null
 
     init {
-        if (USE_ZEBRA_SDK) {
-            initZebraSdk()
-        } else {
-            initFallback()
+        try {
+            sdkHandler = SDKHandler(context, true) // true = STC mode
+            sdkHandler?.dcssdkSetDelegate(this)
+            sdkHandler?.dcssdkSetOperationalMode(DCSSDKDefs.DCSSDK_MODE.DCSSDK_OPMODE_BT_NORMAL)
+            sdkHandler?.dcssdkEnableAvailableScannersDetection(true)
+
+            Log.d(TAG, "Zebra SDK initialized (STC)")
+
+            // Subscribe to events: barcode + session + scanner appearance
+            val subscribeFlags = DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_BARCODE.value or
+                    DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_ESTABLISHMENT.value or
+                    DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SESSION_TERMINATION.value or
+                    DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_APPEARANCE.value or
+                    DCSSDKDefs.DCSSDK_EVENT.DCSSDK_EVENT_SCANNER_DISAPPEARANCE.value
+            sdkHandler?.dcssdkSubsribeForEvents(subscribeFlags)
+
+            // Generate pairing barcode for DS8178 (SSI mode)
+            generatePairingBarcode()
+
+        } catch (e: Exception) {
+            Log.e(TAG, "SDK init failed: ${e.message}")
         }
     }
 
-    // ── Zebra SDK Mode ─────────────────────────────────────────
-    private fun initZebraSdk() {
-        Log.d(TAG, "Initializing Zebra Scanner SDK (Scan-To-Connect)...")
-        // When USE_ZEBRA_SDK = true and AAR is available:
-        //   val sdkHandler = SDKHandler(context, true) // true = STC mode
-        //   sdkHandler.dcssdkSetDelegate(sdkDelegate)
-        //   sdkHandler.dcssdkEnableAvailableScannersDetection(true)
-        //   val barcodeView = sdkHandler.dcssdkGetPairingBarcode(
-        //       DCSSDKDefs.DCSSDK_BT_PROTOCOL.SSI_BT_CLASSIC,
-        //       DCSSDKDefs.DCSSDK_BT_SCANNER_CONFIG.DEFAULT
-        //   )
-        //   pairingBarcodeData = bitmapToBase64(barcodeView.bitmap)
-        Log.d(TAG, "Zebra SDK not available, using fallback mode")
+    // ── Generate Scan-To-Connect Barcode ───────────────────────
+    private fun generatePairingBarcode() {
+        try {
+            // SSI slave = scanner connects to Android via SSI protocol
+            val barcodeView = sdkHandler?.dcssdkGetPairingBarcode(
+                DCSSDKDefs.DCSSDK_BT_PROTOCOL.SSI_BT_SSI_SLAVE,
+                DCSSDKDefs.DCSSDK_BT_SCANNER_CONFIG.KEEP_CURRENT
+            )
+
+            if (barcodeView != null) {
+                pairingBarcodeData = viewToBase64Png(barcodeView)
+                Log.d(TAG, "Pairing barcode generated (${pairingBarcodeData.length} chars)")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Pairing barcode failed: ${e.message}")
+        }
     }
 
-    // ── Fallback Bluetooth Mode ────────────────────────────────
-    private fun initFallback() {
-        btService?.setCallback(object : BtScannerService.ScannerCallback {
-            override fun onBarcodeReceived(barcode: String, type: String) {
-                lastBarcode = barcode
-                lastBarcodeType = type
-                isScannerConnected = true
-                Log.d(TAG, "Barcode: [$type] $barcode")
-            }
+    // Render a BarCodeView to a base64 PNG
+    private fun viewToBase64Png(view: BarCodeView): String {
+        val xSize = view.getXSize()
+        val ySize = view.getYSize()
+        val width = if (xSize > 0) xSize else 340
+        val height = if (ySize > 0) ySize else 72
+        view.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+        )
+        view.layout(0, 0, width, height)
 
-            override fun onConnectionStateChanged(connected: Boolean, deviceName: String) {
-                isScannerConnected = connected
-                connectedDeviceName = if (connected) deviceName else ""
-                Log.d(TAG, "Scanner ${if (connected) "connected" else "disconnected"}: $deviceName")
-            }
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(android.graphics.Color.WHITE)
+        view.draw(canvas)
 
-            override fun onError(message: String) {
-                Log.w(TAG, "Error: $message")
-            }
-        })
-        btService?.startServer()
-    }
-
-    // ── Helpers ────────────────────────────────────────────────
-    private fun bitmapToBase64(bmp: Bitmap): String {
         val stream = ByteArrayOutputStream()
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        val base64 = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+        bitmap.recycle()
+        return "data:image/png;base64,$base64"
     }
+
+    // ── IDcsSdkApiDelegate ─────────────────────────────────────
+    override fun dcssdkEventScannerAppeared(scannerInfo: DCSScannerInfo) {
+        Log.d(TAG, "Scanner appeared: ${scannerInfo.scannerName} (${scannerInfo.scannerID})")
+    }
+
+    override fun dcssdkEventScannerDisappeared(scannerID: Int) {
+        Log.d(TAG, "Scanner disappeared: $scannerID")
+    }
+
+    override fun dcssdkEventCommunicationSessionEstablished(scannerInfo: DCSScannerInfo) {
+        isScannerConnected = true
+        connectedDeviceName = scannerInfo.scannerName ?: "DS8178"
+        Log.d(TAG, "Session established: ${scannerInfo.scannerName}")
+    }
+
+    override fun dcssdkEventCommunicationSessionTerminated(scannerID: Int) {
+        isScannerConnected = false
+        connectedDeviceName = ""
+        Log.d(TAG, "Session terminated: $scannerID")
+    }
+
+    override fun dcssdkEventBarcode(barcodeData: ByteArray, barcodeType: Int, scannerID: Int) {
+        val barcode = String(barcodeData, Charsets.UTF_8).trim()
+        lastBarcode = barcode
+        lastBarcodeType = when (barcodeType) {
+            0 -> "CODE128"; 1 -> "CODE39"; 2 -> "EAN13"; 3 -> "QR_CODE"
+            else -> "BARCODE_$barcodeType"
+        }
+        Log.d(TAG, "Barcode [$scannerID]: $barcode")
+    }
+
+    override fun dcssdkEventImage(imageData: ByteArray, scannerID: Int) {}
+    override fun dcssdkEventVideo(videoData: ByteArray, scannerID: Int) {}
+    override fun dcssdkEventBinaryData(binaryData: ByteArray, scannerID: Int) {}
+    override fun dcssdkEventFirmwareUpdate(event: com.zebra.scannercontrol.FirmwareUpdateEvent) {}
+    override fun dcssdkEventAuxScannerAppeared(auxScanner: DCSScannerInfo, mainScanner: DCSScannerInfo) {}
+    override fun dcssdkEventConfigurationUpdate(event: com.zebra.barcode.sdk.sms.ConfigurationUpdateEvent) {}
 
     // ── JS Interface ───────────────────────────────────────────
     @JavascriptInterface
     fun getPairingBarcodeData(): String = pairingBarcodeData
 
     @JavascriptInterface
-    fun getPhoneMac(): String {
-        return btService?.getPhoneMac() ?: run {
-            try {
-                val adapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
-                adapter?.address ?: "UNAVAILABLE"
-            } catch (e: Exception) { "UNAVAILABLE" }
-        }
+    fun regeneratePairingBarcode(): String {
+        generatePairingBarcode()
+        return pairingBarcodeData
     }
-
-    @JavascriptInterface
-    fun getPhoneName(): String = btService?.getPhoneName() ?: "Android"
 
     @JavascriptInterface
     fun getLastBarcode(): String = lastBarcode
@@ -131,61 +173,31 @@ class ScannerBridge(private val context: Context) {
     fun getConnectedDeviceName(): String = connectedDeviceName
 
     @JavascriptInterface
-    fun startDiscovery(): String {
-        btService?.startScan(8000)
-        return "scanning"
-    }
-
-    @JavascriptInterface
-    fun stopDiscovery() { btService?.stopScan() }
-
-    @JavascriptInterface
-    fun getDiscoveredDevices(): String {
-        val arr = org.json.JSONArray()
-        btService?.discoveredDevices?.forEach { device ->
-            arr.put(JSONObject().apply {
-                put("name", device.name ?: "Unknown")
-                put("address", device.address)
-                put("type", when (device.type) {
-                    android.bluetooth.BluetoothDevice.DEVICE_TYPE_CLASSIC -> "CLASSIC"
-                    android.bluetooth.BluetoothDevice.DEVICE_TYPE_LE -> "BLE"
-                    android.bluetooth.BluetoothDevice.DEVICE_TYPE_DUAL -> "DUAL"
-                    else -> "UNKNOWN"
-                })
-            })
-        }
-        return arr.toString()
-    }
-
-    @JavascriptInterface
-    fun connectToDevice(address: String) { btService?.connectByAddress(address) }
-
-    @JavascriptInterface
-    fun disconnectDevice() { btService?.disconnect() }
-
-    @JavascriptInterface
     fun getConfig(): String {
         return JSONObject().apply {
-            put("enableLoginQR", true)
-            put("enableCategoryScan", true)
-            put("loginQRFormat", "NCMEMS://")
-            put("scannerType", if (USE_ZEBRA_SDK) "ZEBRA_SDK_STC" else "BLUETOOTH_FALLBACK")
-            put("sdkAvailable", USE_ZEBRA_SDK)
+            put("scannerType", "ZEBRA_SDK_STC")
+            put("sdkAvailable", true)
+            put("stcMode", true)
+            put("protocol", "SSI_BT_SSI_SLAVE")
         }.toString()
     }
 
     @JavascriptInterface
-    fun generatePairingBarcode(): String {
-        if (USE_ZEBRA_SDK) {
-            // Regenerate pairing barcode from SDK
-            return pairingBarcodeData
-        }
-        // Fallback: return empty — JS will generate Code128 barcode
-        return ""
+    fun getPhoneName(): String {
+        return try {
+            android.bluetooth.BluetoothAdapter.getDefaultAdapter()?.name ?: "Android"
+        } catch (e: Exception) { "Android" }
+    }
+
+    @JavascriptInterface
+    fun disconnectDevice() {
+        try { sdkHandler?.dcssdkClose() } catch (_: Exception) {}
+        isScannerConnected = false
+        connectedDeviceName = ""
     }
 
     // ── Lifecycle ──────────────────────────────────────────────
     fun destroy() {
-        btService?.destroy()
+        try { sdkHandler?.dcssdkClose() } catch (_: Exception) {}
     }
 }

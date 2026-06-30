@@ -47,12 +47,10 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.multidex:multidex:2.0.1")
 
+    // Zebra Scanner SDK (Scan-To-Connect)
+    implementation(files("libs/barcode_scanner_library_v2.7.3.0-release.aar"))
+
     // WebView compatibility (required for older devices)
     implementation("androidx.webkit:webkit:1.10.0")
-
-    // Zebra DataWedge integration uses broadcast intents — no SDK AAR needed.
-    // If you need the Scanner SDK AAR instead:
-    //   Download from: https://www.zebra.com/us/en/support-downloads/software/scanner-software/scanner-sdk-for-android.html
-    //   Place in app/libs/ and uncomment:
-    // implementation(files("libs/barcode_scanner_library_v2.6.4.0-release.aar"))
+    implementation("androidx.lifecycle:lifecycle-process:2.6.2")
 }
