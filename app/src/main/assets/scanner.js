@@ -84,7 +84,7 @@ const Scanner = (() => {
     });
   }
 
-  // ── Polling fallback for when native push doesn't work ──────
+  // ── Polling fallback for DataWedge (no native push event) ─────
   let pollTimer = null;
   function startPolling() {
     if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getLastBarcode) return;

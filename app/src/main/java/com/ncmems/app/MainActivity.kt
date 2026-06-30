@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var scannerBridge: ScannerBridge
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +65,6 @@ class MainActivity : AppCompatActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
-                // Suppress JS alerts for compatibility
                 result.confirm()
                 return true
             }
@@ -74,9 +74,10 @@ class MainActivity : AppCompatActivity() {
         // JavaScript interface for native features
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
-        // Scanner bridge
-        val scannerBridge = ScannerBridge(this)
+        // Scanner bridge (DataWedge)
+        scannerBridge = ScannerBridge(this)
         webView.addJavascriptInterface(scannerBridge, "ScannerBridge")
+        scannerBridge.register(this)
 
         // Load the HTML from assets
         webView.loadUrl("file:///android_asset/index.html")
@@ -86,6 +87,17 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (::webView.isInitialized) {
             webView.evaluateJavascript("window.checkConnectionAgain?.()", null)
+        }
+        // Re-register scanner receiver in case it was killed
+        if (::scannerBridge.isInitialized) {
+            scannerBridge.register(this)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (::scannerBridge.isInitialized) {
+            scannerBridge.unregister(this)
         }
     }
 
