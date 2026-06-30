@@ -1,66 +1,100 @@
 // ===================================================================
-// Scanner — Zebra Scanner SDK WebView Bridge (Browser Mock Fallback)
+// Scanner — Zebra scanner integration
 // ===================================================================
-// Usage:
-//   Scanner.onBarcode(data => handleScan(data))
-//   Scanner.start()
-//   Scanner.stop()
-//   Scanner.connected  // boolean
+// PRIMARY FLOW:
+//   Login page shows phone's Bluetooth MAC as QR code.
+//   Zebra scanner scans the QR → connects to phone (HID keyboard mode).
+//   Barcode arrives as keystrokes → captured by onScanKey handler.
 //
-// In production: communicates with ScannerBridge (native Android).
-// In browser/dev: press 'Q' key to simulate a scan.
+//   Also supports SPP/BLE incoming connections via native server socket.
+//
+// Browser mock: press Q/W/E/R keys to simulate scan.
 // ===================================================================
 
 const Scanner = (() => {
   'use strict';
 
-  // ── Config ──────────────────────────────────────────────────
   const CONFIG = {
     loginQRFormat: 'NCMEMS://',
-    beepOnScan: true,
-    vibrateOnScan: true,
     enableLoginQR: true,
     enableCategoryScan: true,
   };
 
-  // ── State ───────────────────────────────────────────────────
   let listeners = [];
   let scanning = false;
   let _connected = false;
+  let _lastHidBarcode = '';
+  let _hidTimeout = null;
 
   // ── Load config from native bridge ──────────────────────────
   function init() {
-    if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getConfig) {
+    if (typeof ScannerBridge !== 'undefined') {
       try {
         const cfg = JSON.parse(ScannerBridge.getConfig());
         Object.assign(CONFIG, cfg);
       } catch (e) {}
       _connected = ScannerBridge.isConnected();
     }
+
+    // Start HID key capture (Zebra scanner in HID keyboard mode)
+    startHidCapture();
+  }
+
+  // ── HID key capture (for Zebra scanners in keyboard mode) ───
+  function startHidCapture() {
+    // Buffer keystrokes with a small timeout to detect barcode end
+    let buffer = '';
+
+    document.addEventListener('keydown', e => {
+      // Skip if the event target is an input field (normal typing)
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      // Check for mock scan keys (browser testing)
+      if (e.key === 'q') { _onBarcodeReceived('NCMEMS://admin:admin123', 'QR_CODE'); return; }
+      if (e.key === 'w') { _onBarcodeReceived('JIG-001', 'CODE128'); return; }
+      if (e.key === 'e') { _onBarcodeReceived('PART-005', 'CODE128'); return; }
+      if (e.key === 'r') { _onBarcodeReceived('ESD-003', 'CODE128'); return; }
+
+      // Prevent actual typing
+      e.preventDefault();
+
+      // Handle Enter key (scanner sends Enter after barcode)
+      if (e.key === 'Enter') {
+        if (buffer.length > 2) {
+          const barcode = buffer;
+          buffer = '';
+          _lastHidBarcode = barcode;
+          _onBarcodeReceived(barcode, 'HID_BARCODE');
+          _connected = true;
+        }
+        return;
+      }
+
+      // Accumulate printable characters
+      if (e.key.length === 1 && e.key.charCodeAt(0) >= 0x20) {
+        buffer += e.key;
+        // Auto-detect end after 150ms of no input
+        clearTimeout(_hidTimeout);
+        _hidTimeout = setTimeout(() => {
+          if (buffer.length > 2) {
+            const barcode = buffer;
+            buffer = '';
+            _lastHidBarcode = barcode;
+            _onBarcodeReceived(barcode, 'HID_BARCODE');
+            _connected = true;
+          }
+        }, 150);
+      }
+    });
   }
 
   // ── Public API ──────────────────────────────────────────────
-  function start() {
-    scanning = true;
-    if (typeof ScannerBridge !== 'undefined' && ScannerBridge.startScanning) {
-      ScannerBridge.startScanning();
-    }
-  }
+  function start() { scanning = true; }
+  function stop() { scanning = false; }
 
-  function stop() {
-    scanning = false;
-    if (typeof ScannerBridge !== 'undefined' && ScannerBridge.stopScanning) {
-      ScannerBridge.stopScanning();
-    }
-  }
-
-  function onBarcode(fn) {
-    if (typeof fn === 'function') listeners.push(fn);
-  }
-
-  function offBarcode(fn) {
-    listeners = listeners.filter(l => l !== fn);
-  }
+  function onBarcode(fn) { if (typeof fn === 'function') listeners.push(fn); }
+  function offBarcode(fn) { listeners = listeners.filter(l => l !== fn); }
 
   function setConfig(obj) {
     Object.assign(CONFIG, obj);
@@ -73,18 +107,12 @@ const Scanner = (() => {
   function _onBarcodeReceived(barcode, type) {
     if (!scanning) return;
     const data = { barcode, type: type || 'UNKNOWN', timestamp: Date.now() };
-
-    // Quick beep / vibrate feedback
-    if (CONFIG.beepOnScan && typeof AudioContext !== 'undefined') {
-      try { new AudioContext().close(); } catch(e) {}
-    }
-
     listeners.forEach(fn => {
       try { fn(data); } catch(e) { console.warn('Scanner listener error:', e); }
     });
   }
 
-  // ── Polling fallback for DataWedge (no native push event) ─────
+  // ── Poll for SPP data from native bridge ────────────────────
   let pollTimer = null;
   function startPolling() {
     if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getLastBarcode) return;
@@ -94,65 +122,39 @@ const Scanner = (() => {
         const barcode = ScannerBridge.getLastBarcode();
         if (barcode && barcode !== lastPoll) {
           lastPoll = barcode;
-          const type = ScannerBridge.getLastBarcodeType();
-          _onBarcodeReceived(barcode, type);
+          _onBarcodeReceived(barcode, ScannerBridge.getLastBarcodeType());
         }
+        _connected = ScannerBridge.isConnected();
       } catch(e) {}
     }, 300);
   }
-  function stopPolling() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+  // ── Phone info helpers ──────────────────────────────────────
+  function getPhoneMac() {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getPhoneMac) return 'UNAVAILABLE';
+    return ScannerBridge.getPhoneMac();
   }
 
-  // ── Browser mock: press 'Q' to simulate scan ───────────────
-  function enableMock() {
-    document.addEventListener('keydown', e => {
-      if (e.key === 'q' || e.key === 'Q') {
-        _onBarcodeReceived('NCMEMS://admin:admin123', 'QR_CODE');
-      }
-      if (e.key === 'w' || e.key === 'W') {
-        _onBarcodeReceived('JIG-001', 'CODE128');
-      }
-      if (e.key === 'e' || e.key === 'E') {
-        _onBarcodeReceived('PART-005', 'CODE128');
-      }
-      if (e.key === 'r' || e.key === 'R') {
-        _onBarcodeReceived('ESD-003', 'CODE128');
-      }
-    });
+  function getPhoneName() {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getPhoneName) return 'NC MEMS';
+    return ScannerBridge.getPhoneName();
   }
 
-  // ── Initialize ──────────────────────────────────────────────
-  init();
-  // If native bridge is present, poll for barcode data
-  if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getLastBarcode) {
-    startPolling();
-  } else {
-    enableMock();
-  }
-
-  // ── Scanner discovery & connection helpers ──────────────────
+  // ── Discovery for Settings ──────────────────────────────────
   function discover(callback) {
     if (typeof ScannerBridge === 'undefined' || !ScannerBridge.startDiscovery) {
-      callback([]);
-      return;
+      callback([]); return;
     }
     ScannerBridge.startDiscovery();
     setTimeout(() => {
       const raw = ScannerBridge.getDiscoveredDevices();
-      const devices = JSON.parse(raw || '[]');
-      callback(devices);
+      callback(JSON.parse(raw || '[]'));
     }, 8000);
   }
 
   function connect(address) {
     if (typeof ScannerBridge === 'undefined' || !ScannerBridge.connectToDevice) return;
     ScannerBridge.connectToDevice(address);
-  }
-
-  function connectByAddress(address) {
-    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.connectByAddress) return false;
-    return ScannerBridge.connectByAddress(address);
   }
 
   function disconnect() {
@@ -165,22 +167,20 @@ const Scanner = (() => {
     return ScannerBridge.getConnectedDeviceName();
   }
 
+  // ── Init ────────────────────────────────────────────────────
+  init();
+  if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getLastBarcode) {
+    startPolling();
+  }
+
   // ── Public interface ────────────────────────────────────────
   return {
     get connected() { return _connected; },
     get scanning() { return scanning; },
     get config() { return { ...CONFIG }; },
-    init,
-    start,
-    stop,
-    onBarcode,
-    offBarcode,
-    setConfig,
-    discover,
-    connect,
-    connectByAddress,
-    disconnect,
-    getConnectedDevice,
-    _onBarcodeReceived,  // for native callback
+    init, start, stop, onBarcode, offBarcode, setConfig,
+    getPhoneMac, getPhoneName,
+    discover, connect, disconnect, getConnectedDevice,
+    _onBarcodeReceived,
   };
 })();

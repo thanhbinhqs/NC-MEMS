@@ -498,35 +498,6 @@
       showToast('🔌 Đã ngắt kết nối scanner');
     }
 
-    // ======================== LOGIN PAGE SCANNER CONNECT ========================
-    function connectScannerFromLogin() {
-      const mac = localStorage.getItem('ncmems_mac_address');
-      if (!mac) { showToast('⚠️ Chưa có địa chỉ MAC. Vui lòng cài đặt MAC trước.'); return; }
-
-      const btn = document.getElementById('loginScanBtn');
-      const status = document.getElementById('loginScannerStatus');
-      btn.disabled = true;
-      btn.textContent = '⏳ Đang kết nối...';
-      status.textContent = '🔄 Đang kết nối tới ' + mac + '...';
-      status.style.color = '#1a4a8a';
-
-      Scanner.connectByAddress(mac);
-
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = '📡 Kết nối Scanner';
-        if (Scanner.connected) {
-          const name = Scanner.getConnectedDevice() || mac;
-          status.textContent = '✅ Đã kết nối: ' + name;
-          status.style.color = '#2e7d32';
-          showToast('📡 Scanner đã sẵn sàng');
-        } else {
-          status.textContent = '❌ Kết nối thất bại. Kiểm tra MAC và Bluetooth.';
-          status.style.color = '#d32f2f';
-        }
-      }, 3000);
-    }
-
     // ======================== LOGOUT ========================
     function confirmLogout() { document.getElementById('logoutModal').classList.add('open'); }
     function closeLogout() { document.getElementById('logoutModal').classList.remove('open'); }
@@ -717,9 +688,14 @@
     function renderLoginQR() {
       const container = document.getElementById('loginMacQR');
       const link = document.getElementById('macConfigLink');
-      const saved = localStorage.getItem('ncmems_mac_address');
+      const hasMac = localStorage.getItem('ncmems_mac_address');
 
-      if (!saved || !saved.trim()) {
+      // Show phone's Bluetooth MAC (or device MAC if configured)
+      const phoneMac = Scanner.getPhoneMac();
+      const qrText = phoneMac || hasMac || 'NC MEMS';
+      const displayText = phoneMac || hasMac || '';
+
+      if (!hasMac && !phoneMac) {
         container.style.display = 'none';
         if (link) link.style.display = '';
         return;
@@ -727,18 +703,16 @@
 
       container.style.display = 'block';
       if (link) link.style.display = 'none';
-      document.getElementById('loginMacQRValue').textContent = saved;
+      document.getElementById('loginMacQRValue').textContent = displayText;
 
-      // Show connect button on login page
-      const scanBtn = document.getElementById('loginScanBtn');
-      const scanStatus = document.getElementById('loginScannerStatus');
-      if (scanBtn) scanBtn.style.display = 'inline-block';
-      if (scanStatus) {
+      // Show scanner connection status
+      const status = document.getElementById('loginScannerStatus');
+      if (status) {
         if (Scanner.connected) {
-          scanStatus.textContent = '✅ Scanner: ' + (Scanner.getConnectedDevice() || saved);
-          scanStatus.style.color = '#2e7d32';
+          status.textContent = '✅ Scanner: ' + Scanner.getConnectedDevice();
+          status.style.color = '#2e7d32';
         } else {
-          scanStatus.textContent = '';
+          status.textContent = ''; // Don't show anything when not connected
         }
       }
 
@@ -750,7 +724,7 @@
 
       try {
         const qr = qrcode(0, 'L');
-        qr.addData(saved);
+        qr.addData(qrText);
         qr.make();
 
         const cellSize = 5;

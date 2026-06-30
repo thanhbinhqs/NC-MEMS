@@ -8,8 +8,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Bridge between Bluetooth scanner (SPP/BLE) and WebView JavaScript.
- * Uses BtScannerService for all Bluetooth connectivity.
+ * Bridge between Bluetooth scanner and WebView JavaScript.
+ *
+ * PRIMARY FLOW (recommended):
+ *   1. QR code on login page shows the phone's Bluetooth MAC
+ *   2. Zebra scanner scans the QR → connects to phone (HID keyboard or SPP)
+ *   3. Barcode data received via BtScannerService server + HID key capture
+ *
+ * FALLBACK:
+ *   User can still discover & connect to a scanner from Settings.
  */
 class ScannerBridge(private val context: Context) {
 
@@ -46,9 +53,19 @@ class ScannerBridge(private val context: Context) {
                 Log.w(TAG, "Error: $message")
             }
         })
+
+        // Start Bluetooth server for incoming scanner connections
+        btService.startServer()
     }
 
-    // ── JS Interface ───────────────────────────────────────────
+    // ── Phone Info ─────────────────────────────────────────────
+    @JavascriptInterface
+    fun getPhoneMac(): String = btService.getPhoneMac()
+
+    @JavascriptInterface
+    fun getPhoneName(): String = btService.getPhoneName()
+
+    // ── Status ──────────────────────────────────────────────────
     @JavascriptInterface
     fun getLastBarcode(): String = lastBarcode
 
@@ -61,6 +78,7 @@ class ScannerBridge(private val context: Context) {
     @JavascriptInterface
     fun getConnectedDeviceName(): String = connectedDeviceName
 
+    // ── Discovery (for Settings → scan for devices) ────────────
     @JavascriptInterface
     fun startDiscovery(): String {
         btService.startScan(8000)
@@ -68,9 +86,7 @@ class ScannerBridge(private val context: Context) {
     }
 
     @JavascriptInterface
-    fun stopDiscovery() {
-        btService.stopScan()
-    }
+    fun stopDiscovery() { btService.stopScan() }
 
     @JavascriptInterface
     fun getDiscoveredDevices(): String {
@@ -90,55 +106,34 @@ class ScannerBridge(private val context: Context) {
         return arr.toString()
     }
 
+    // ── Client connect (fallback) ──────────────────────────────
     @JavascriptInterface
     fun connectToDevice(address: String) {
-        val device = btService.discoveredDevices.find { it.address == address }
-        if (device != null) {
-            btService.connect(device)
-        } else {
-            Log.w(TAG, "Device $address not found in discovered list")
-        }
+        btService.connectByAddress(address)
     }
 
     @JavascriptInterface
-    fun connectByAddress(address: String): Boolean {
-        return btService.connectByAddress(address)
-    }
+    fun disconnectDevice() { btService.disconnect() }
 
     @JavascriptInterface
-    fun disconnectDevice() {
-        btService.disconnect()
-    }
+    fun startScanning() {}
 
     @JavascriptInterface
-    fun startScanning() {
-        // Scanner is already receiving data via BtScannerService callbacks
-    }
-
-    @JavascriptInterface
-    fun stopScanning() {
-        // Scanner keeps running via BtScannerService
-    }
+    fun stopScanning() {}
 
     @JavascriptInterface
     fun getConfig(): String {
         return JSONObject().apply {
             put("enableLoginQR", true)
             put("enableCategoryScan", true)
-            put("beepOnScan", false)
-            put("vibrateOnScan", false)
             put("loginQRFormat", "NCMEMS://")
-            put("scannerType", "BLUETOOTH_SPP_BLE")
+            put("scannerType", "BLUETOOTH_SERVER")
         }.toString()
     }
 
     @JavascriptInterface
-    fun setConfig(json: String) {
-        Log.d(TAG, "setConfig: $json")
-    }
+    fun setConfig(json: String) { Log.d(TAG, "setConfig: $json") }
 
     // ── Lifecycle ──────────────────────────────────────────────
-    fun destroy() {
-        btService.destroy()
-    }
+    fun destroy() { btService.destroy() }
 }

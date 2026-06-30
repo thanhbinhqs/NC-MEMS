@@ -46,17 +46,17 @@
           📷 Quét mã QR để đăng nhập nhanh
         </div>
 
-        <!-- LOGIN PAGE MAC QR CODE -->
+        <!-- LOGIN PAGE MAC QR CODE - PHONE'S Bluetooth MAC for scanner to connect -->
         <div id="loginMacQR" style="display:none;text-align:center;margin:4px 0 2px;">
-          <div id="loginMacQRValue" style="font-family:monospace;font-size:11px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:4px;"></div>
+          <div id="loginMacQRValue" style="font-family:monospace;font-size:11px;font-weight:700;color:#1a4a8a;letter-spacing:1px;margin-bottom:2px;"></div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;">Quét mã này bằng Zebra Scanner để kết nối</div>
           <div style="display:inline-block;position:relative;">
             <canvas id="loginQRCanvas" style="width:140px;height:140px;border-radius:8px;background:#fff;"></canvas>
             <button onclick="toggleMacConfig()" title="Sửa địa chỉ MAC"
               style="position:absolute;top:-6px;right:-6px;background:#1a4a8a;color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);z-index:5;">✎</button>
           </div>
-          <!-- Scanner connect from MAC -->
+          <!-- Connection status -->
           <div id="loginScannerStatus" style="font-size:11px;margin-top:4px;"></div>
-          <button id="loginScanBtn" onclick="connectScannerFromLogin()" style="display:none;margin-top:4px;background:#1a4a8a;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">📡 Kết nối Scanner</button>
         </div>
 
         <!-- MAC config link (only visible when no MAC saved) -->
