@@ -41,50 +41,68 @@ const Scanner = (() => {
   }
 
   // ── HID key capture (for Zebra scanners in keyboard mode) ───
+  // Scanner sends keystrokes to whichever field has focus.
+  // We capture ALL keystrokes globally and detect barcode patterns:
+  //   1. Multiple chars arriving rapidly (<200ms between keys)
+  //   2. Terminated by Enter
+  //   3. Or timeout (200ms without key = end of barcode)
+  // Non-blocking: does NOT preventDefault, normal typing still works.
   function startHidCapture() {
-    // Buffer keystrokes with a small timeout to detect barcode end
     let buffer = '';
+    let lastKeyTime = 0;
+    let barcodeTimer = null;
 
     document.addEventListener('keydown', e => {
-      // Skip if the event target is an input field (normal typing)
+      // Mock scan keys (browser testing) — only when no input focused
       const tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        if (e.key === 'q') { _onBarcodeReceived('NCMEMS://admin:admin123', 'MOCK'); return; }
+        if (e.key === 'w') { _onBarcodeReceived('JIG-001', 'MOCK'); return; }
+        if (e.key === 'e') { _onBarcodeReceived('PART-005', 'MOCK'); return; }
+        if (e.key === 'r') { _onBarcodeReceived('ESD-003', 'MOCK'); return; }
+      }
 
-      // Check for mock scan keys (browser testing)
-      if (e.key === 'q') { _onBarcodeReceived('NCMEMS://admin:admin123', 'QR_CODE'); return; }
-      if (e.key === 'w') { _onBarcodeReceived('JIG-001', 'CODE128'); return; }
-      if (e.key === 'e') { _onBarcodeReceived('PART-005', 'CODE128'); return; }
-      if (e.key === 'r') { _onBarcodeReceived('ESD-003', 'CODE128'); return; }
-
-      // Prevent actual typing
-      e.preventDefault();
-
-      // Handle Enter key (scanner sends Enter after barcode)
+      // Handle Enter — potential barcode terminator
       if (e.key === 'Enter') {
-        if (buffer.length > 2) {
+        if (buffer.length >= 3) {
           const barcode = buffer;
           buffer = '';
-          _lastHidBarcode = barcode;
-          _onBarcodeReceived(barcode, 'HID_BARCODE');
+          lastKeyTime = 0;
+          clearTimeout(barcodeTimer);
           _connected = true;
+          _onBarcodeReceived(barcode, 'HID_BARCODE');
         }
+        buffer = '';
         return;
       }
 
-      // Accumulate printable characters
+      // Track printable characters
       if (e.key.length === 1 && e.key.charCodeAt(0) >= 0x20) {
+        const now = Date.now();
+        const gap = now - lastKeyTime;
+
+        // If gap > 500ms, this is likely new input (not barcode continuation)
+        if (gap > 500) {
+          buffer = '';
+        }
+
         buffer += e.key;
-        // Auto-detect end after 150ms of no input
-        clearTimeout(_hidTimeout);
-        _hidTimeout = setTimeout(() => {
-          if (buffer.length > 2) {
-            const barcode = buffer;
-            buffer = '';
-            _lastHidBarcode = barcode;
-            _onBarcodeReceived(barcode, 'HID_BARCODE');
-            _connected = true;
-          }
-        }, 150);
+        lastKeyTime = now;
+
+        // If we accumulated enough chars rapidly, it's a barcode
+        if (buffer.length >= 4 && gap > 0 && gap < 200) {
+          clearTimeout(barcodeTimer);
+          barcodeTimer = setTimeout(() => {
+            // No new key for 200ms → barcode complete
+            if (buffer.length >= 3) {
+              const barcode = buffer;
+              buffer = '';
+              lastKeyTime = 0;
+              _connected = true;
+              _onBarcodeReceived(barcode, 'HID_BARCODE');
+            }
+          }, 200);
+        }
       }
     });
   }
