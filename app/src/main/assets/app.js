@@ -735,33 +735,49 @@
         }
       }
 
-      // Fallback: QR code with extended pairing data
+      // Fallback: Code128 extended pairing barcode
       if (!barcodeShown && mac.length >= 10) {
-        // Format: PH16A{mac_nocolons}
+        // Data format: PH16A{mac_nocolons}
         // P = pairing header, H = host, 16 = SSI BT Classic, A = address
         const pairingData = 'PH16A' + mac.replace(/[:\-]/g, '').toUpperCase();
         const canvas = document.getElementById('loginPairingBarcode');
         if (canvas) {
-          canvas.height = 160;
-          canvas.style.height = '160px';
-          const ctx = canvas.getContext('2d');
+          canvas.height = 80;
+          canvas.style.height = '80px';
           try {
-            const qr = qrcode(0, 'L');
-            qr.addData(pairingData);
-            qr.make();
-            const cellSize = 4;
-            const margin = 2;
-            const dataURL = qr.createDataURL(cellSize, margin);
-            const img = new Image();
-            img.onload = function() {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              const x = Math.max(0, (canvas.width - img.width) / 2);
-              const y = Math.max(0, (canvas.height - img.height) / 2);
-              ctx.drawImage(img, x, y);
-            };
-            img.src = dataURL;
+            if (typeof JsBarcode !== 'undefined') {
+              JsBarcode(canvas, pairingData, {
+                format: 'CODE128',
+                width: 2,
+                height: 60,
+                displayValue: true,
+                fontSize: 11,
+                font: 'monospace',
+                margin: 8,
+                background: '#ffffff',
+                lineColor: '#000000',
+                valid: function() {}
+              });
+            } else {
+              // Fallback: draw QR code if JsBarcode not available
+              canvas.height = 160;
+              canvas.style.height = '160px';
+              const ctx = canvas.getContext('2d');
+              const qr = qrcode(0, 'L');
+              qr.addData(pairingData);
+              qr.make();
+              const dataURL = qr.createDataURL(4, 2);
+              const img = new Image();
+              img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const x = Math.max(0, (canvas.width - img.width) / 2);
+                const y = Math.max(0, (canvas.height - img.height) / 2);
+                ctx.drawImage(img, x, y);
+              };
+              img.src = dataURL;
+            }
           } catch(e) {
-            console.error('QR error:', e);
+            console.error('Barcode error:', e);
           }
         }
         barcodeShown = true;
