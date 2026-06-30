@@ -182,6 +182,25 @@ function setLanguage(lang, label) {
 
 // Open / close language picker dialog
 function showLanguagePicker() {
+  // Mark current language with a checkmark
+  document.querySelectorAll('#languageDialog .lang-option').forEach(el => {
+    const code = el.getAttribute('data-lang');
+    const isActive = code === _currentLang;
+    el.style.display = 'flex';
+    el.style.justifyContent = 'space-between';
+    el.style.alignItems = 'center';
+    // Remove existing checkmark
+    let check = el.querySelector('.lang-check');
+    if (!check) {
+      check = document.createElement('span');
+      check.className = 'lang-check';
+      check.style.cssText = 'color:#1a4a8a;font-weight:700;font-size:16px;';
+      el.appendChild(check);
+    }
+    check.textContent = isActive ? '✓' : '';
+    if (isActive) el.style.background = '#f0f4ff';
+    else el.style.background = '';
+  });
   document.getElementById('languageDialog').classList.add('open');
 }
 function closeLanguagePicker() {
