@@ -74,29 +74,29 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:18px;">📡</span>
-            <h2 style="margin:0;font-size:16px;">Địa chỉ MAC</h2>
+            <h2 style="margin:0;font-size:16px;" data-i18n="mac.title">Địa chỉ MAC</h2>
           </div>
           <button onclick="closeMacDialog()" class="modal-close">✕</button>
         </div>
 
         <div id="macDialogInput">
-          <div style="font-size:12px;color:#888;margin-bottom:12px;">Nhập địa chỉ MAC của thiết bị BLE để kết nối.</div>
-          <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Địa chỉ MAC</div>
-          <input type="text" id="macDialogInputField" placeholder="VD: AA:BB:CC:DD:EE:FF"
+          <div style="font-size:12px;color:#888;margin-bottom:12px;" data-i18n="mac.desc">Nhập địa chỉ MAC của thiết bị BLE để kết nối.</div>
+          <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;" data-i18n="mac.label">Địa chỉ MAC</div>
+          <input type="text" id="macDialogInputField" placeholder="VD: AA:BB:CC:DD:EE:FF" data-i18n-placeholder="mac.placeholder"
                  oninput="onMACInput()" onkeydown="if(event.key==='Enter')saveMacAddress()"
                  style="width:100%;padding:10px 12px;border:2px solid #ddd;border-radius:8px;font-size:16px;font-family:monospace;outline:none;box-sizing:border-box;">
           <div id="macValidationMsg" style="display:none;font-size:11px;margin-top:4px;"></div>
-          <button onclick="saveMacAddress()" style="width:100%;margin-top:12px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Lưu</button>
+          <button onclick="saveMacAddress()" style="width:100%;margin-top:12px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;" data-i18n="mac.save">💾 Lưu</button>
         </div>
 
         <div id="macDialogDisplay" style="display:none;">
           <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:12px;color:#888;margin-bottom:4px;">Đã lưu</div>
+            <div style="font-size:12px;color:#888;margin-bottom:4px;" data-i18n="mac.saved">Đã lưu</div>
             <div style="font-size:18px;font-weight:700;font-family:monospace;letter-spacing:2px;color:#1a4a8a;" id="macDialogDisplayValue"></div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button onclick="editMacAddress()" style="flex:1;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;">✏️ Sửa</button>
-            <button onclick="deleteMacAddress()" style="background:#f5f5f5;color:#d32f2f;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;">🗑️ Xóa</button>
+            <button onclick="editMacAddress()" style="flex:1;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;" data-i18n="mac.edit">✏️ Sửa</button>
+            <button onclick="deleteMacAddress()" style="background:#f5f5f5;color:#d32f2f;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;cursor:pointer;" data-i18n="mac.delete">🗑️ Xóa</button>
           </div>
         </div>
       </div>
@@ -105,36 +105,36 @@
     <!-- ==================== CONNECTION CHECK ==================== -->
     <div class="modal-overlay" id="connectionModal" style="z-index:200;">
       <div class="modal-content confirm-content">
-        <h2 style="font-size:16px;margin-bottom:8px;">🔗 Kiểm tra kết nối</h2>
-        <p style="font-size:13px;color:#666;margin-bottom:12px;">Vui lòng bật WiFi và Bluetooth để sử dụng ứng dụng</p>
+        <h2 style="font-size:16px;margin-bottom:8px;" data-i18n="conn.title">🔗 Kiểm tra kết nối</h2>
+        <p style="font-size:13px;color:#666;margin-bottom:12px;" data-i18n="conn.desc">Vui lòng bật WiFi và Bluetooth để sử dụng ứng dụng</p>
 
         <div id="connWifi" class="conn-item pending">
           <span class="conn-icon">📶</span>
-          <div style="flex:1;"><div style="font-weight:600;">WiFi</div><div class="conn-status" id="connWifiStatus">Đang kiểm tra...</div></div>
+          <div style="flex:1;"><div style="font-weight:600;" data-i18n="conn.wifi">WiFi</div><div class="conn-status" id="connWifiStatus" data-i18n="conn.checking">Đang kiểm tra...</div></div>
         </div>
 
         <div id="connBt" class="conn-item pending">
           <span class="conn-icon">🔵</span>
-          <div style="flex:1;"><div style="font-weight:600;">Bluetooth</div><div class="conn-status" id="connBtStatus">Đang kiểm tra...</div></div>
+          <div style="flex:1;"><div style="font-weight:600;" data-i18n="conn.bluetooth">Bluetooth</div><div class="conn-status" id="connBtStatus" data-i18n="conn.checking">Đang kiểm tra...</div></div>
         </div>
 
         <div id="connActions" style="display:none;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <button id="connWifiBtn" onclick="openWifiSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">📶 Bật WiFi</button>
-          <button id="connBtBtn" onclick="openBluetoothSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">🔵 Bật Bluetooth</button>
+          <button id="connWifiBtn" onclick="openWifiSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="conn.bt_off">🔓 Bật WiFi</button>
+          <button id="connBtBtn" onclick="openBluetoothSettings()" style="flex:1;min-width:120px;background:#1a4a8a;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="conn.bt_off">🔵 Bật Bluetooth</button>
         </div>
 
-        <button id="connCheckBtn" onclick="checkConnectionAgain()" style="width:100%;margin-top:8px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">🔄 Kiểm tra lại</button>
+        <button id="connCheckBtn" onclick="checkConnectionAgain()" style="width:100%;margin-top:8px;background:#f5f5f5;color:#555;border:1px solid #ddd;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;" data-i18n="conn.retry">🔄 Kiểm tra lại</button>
       </div>
     </div>
 
     <!-- ==================== LOGOUT CONFIRM ==================== -->
     <div class="modal-overlay" id="logoutModal">
       <div class="modal-content confirm-content">
-        <h2>🔒 Đăng xuất</h2>
-        <p>Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?</p>
+        <h2 data-i18n="logout.title">🔒 Đăng xuất</h2>
+        <p data-i18n="logout.confirm">Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?</p>
         <div class="confirm-btns">
-          <button class="btn-cancel" onclick="closeLogout()">Hủy</button>
-          <button class="btn-confirm" onclick="doLogout()">Đăng xuất</button>
+          <button class="btn-cancel" onclick="closeLogout()" data-i18n="logout.cancel">Hủy</button>
+          <button class="btn-confirm" onclick="doLogout()" data-i18n="logout.btn">Đăng xuất</button>
         </div>
       </div>
     </div>
@@ -142,8 +142,8 @@
     <!-- ==================== LANGUAGE PICKER ==================== -->
     <div class="modal-overlay" id="languageDialog">
       <div class="modal-content confirm-content" style="max-width:300px;">
-        <h2 style="font-size:15px;">🌐 Chọn ngôn ngữ</h2>
-        <div class="lang-option" onclick="setLanguage('vi','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
+        <h2 style="font-size:15px;" data-i18n="lang.picker_title">🌐 Chọn ngôn ngữ</h2>
+        <div class="lang-option" onclick="setLanguage('vi','Tiếng Việt')">🇻🇳 <span data-i18n="settings.lang_desc">Tiếng Việt</span></div>
         <div class="lang-option" onclick="setLanguage('en','English')">🇬🇧 English</div>
         <div class="lang-option" onclick="setLanguage('ja','日本語')">🇯🇵 日本語</div>
         <div class="lang-option" onclick="setLanguage('ko','한국어')" style="border-bottom:none;">🇰🇷 한국어</div>
@@ -154,6 +154,7 @@
     <div class="toast" id="toast"></div>
   </div>
 
+  <script src="lang.js"></script>
   <script src="api-service.js"></script>
   <script src="app.js"></script>
   <script src="qrcode.min.js"></script>

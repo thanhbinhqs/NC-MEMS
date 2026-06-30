@@ -48,6 +48,15 @@
       // Load all pages in parallel, then add event bindings
       pages.forEach(loadPage);
 
+      // Init language from saved settings (wait for ApiService.init if needed)
+      ApiService.loadSettings().then(settings => {
+        initLanguage(settings);
+        applyI18n();
+      }).catch(() => {
+        initLanguage({});
+        applyI18n();
+      });
+
       // Bind login enter-key handlers (after pages loaded)
       function bindEnterKey() {
         const pw = document.getElementById('loginPassword');
@@ -269,7 +278,7 @@
 
     // ======================== NAVIGATION ========================
     function navigateTo(category) {
-      showToast('📂 Đang mở ' + category + '...');
+      showToast(__('toast.nav_cat') + ' ' + category + '...');
     }
 
     // ======================== SEARCH ========================
@@ -318,23 +327,8 @@
       darkMode = !darkMode;
       document.getElementById('darkToggle').classList.toggle('on');
       document.body.classList.toggle('dark');
-      showToast(darkMode ? '🌙 Chế độ tối' : '☀️ Chế độ sáng');
+      showToast(darkMode ? __('toast.dark_on') : __('toast.dark_off'));
       ApiService.saveSettings({ dark_mode: darkMode });
-    }
-
-    function showLanguagePicker() {
-      document.getElementById('languageDialog').classList.add('open');
-    }
-    function closeLanguagePicker() {
-      document.getElementById('languageDialog').classList.remove('open');
-    }
-    function setLanguage(lang, label) {
-      document.getElementById('languageDialog').classList.remove('open');
-      document.querySelector('#settingsContent .setting-row:nth-child(2) .setting-desc').textContent = label;
-      const code = document.querySelector('#settingsContent .setting-row:nth-child(2) span');
-      if (code) code.textContent = lang.toUpperCase() + ' ›';
-      ApiService.saveSettings({ language: lang });
-      showToast('🌐 Ngôn ngữ: ' + label);
     }
 
     function restoreSettingToggles() {
@@ -373,7 +367,7 @@
         localStorage.removeItem('ncmems_session');
         document.getElementById('mainApp').classList.remove('active');
         document.getElementById('loginScreen').classList.add('active');
-        showToast('👋 Đã đăng xuất');
+        showToast(__('logout.toast'));
       }).catch(() => {
         isLoggedIn = false;
         localStorage.removeItem('ncmems_session');
