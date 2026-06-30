@@ -9,12 +9,12 @@
         <div class="content" id="settingsContent">
 
           <div class="modal-section-title" data-i18n="settings.display">🎨 Giao diện & Hiển thị</div>
-          <div class="setting-row">
+          <div class="setting-row" onclick="toggleDarkMode()" style="cursor:pointer;">
             <div>
               <div class="setting-label" data-i18n="settings.dark_mode">Chế độ tối</div>
               <div class="setting-desc" data-i18n="settings.dark_desc">Giao diện tối cho môi trường thiếu sáng</div>
             </div>
-            <div class="toggle" id="darkToggle" onclick="toggleDarkMode()"></div>
+            <div class="toggle" id="darkToggle"></div>
           </div>
           <div class="setting-row" onclick="showLanguagePicker()" style="cursor:pointer;">
             <div>
