@@ -185,10 +185,73 @@ const Scanner = (() => {
     return ScannerBridge.getConnectedDeviceName();
   }
 
+  // ── Mock Scanner (for testing without physical scanner) ─────
+  function enableMockScanner() {
+    const btn = document.createElement('div');
+    btn.id = 'mockScannerBtn';
+    btn.textContent = '📡';
+    btn.title = 'Mock Scanner';
+    Object.assign(btn.style, {
+      position: 'fixed', bottom: '100px', right: '8px',
+      width: '44px', height: '44px', borderRadius: '50%',
+      background: '#1a4a8a', color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '18px', cursor: 'pointer', zIndex: '999',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: 'none'
+    });
+
+    let menu = null;
+    function toggleMenu() {
+      if (menu) { menu.remove(); menu = null; return; }
+      menu = document.createElement('div');
+      Object.assign(menu.style, {
+        position: 'fixed', bottom: '150px', right: '8px',
+        background: '#fff', borderRadius: '12px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        padding: '6px', zIndex: '999', minWidth: '200px',
+        fontSize: '13px', border: '1px solid #ddd'
+      });
+      const items = [
+        { l: '🔐 Login (admin)', d: 'NCMEMS://admin:admin123' },
+        { l: '🔧 JIG-001', d: 'JIG-001' },
+        { l: '🔧 PART-005', d: 'PART-005' },
+        { l: '🔧 ESD-003', d: 'ESD-003' },
+      ];
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.textContent = item.l;
+        Object.assign(el.style, {
+          padding: '8px 12px', cursor: 'pointer', borderRadius: '6px',
+          borderBottom: items.indexOf(item) < items.length - 1 ? '1px solid #eee' : 'none'
+        });
+        el.onmouseover = () => el.style.background = '#f0f4ff';
+        el.onmouseout = () => el.style.background = '';
+        el.onclick = () => {
+          _onBarcodeReceived(item.d, 'MOCK'); menu.remove(); menu = null;
+        };
+        menu.appendChild(el);
+      });
+      document.body.appendChild(menu);
+    }
+
+    btn.onclick = () => {
+      if (menu) { menu.remove(); menu = null; }
+      _onBarcodeReceived('NCMEMS://admin:admin123', 'MOCK');
+    };
+    btn.oncontextmenu = (e) => { e.preventDefault(); toggleMenu(); };
+
+    document.body.appendChild(btn);
+  }
+
   // ── Init ────────────────────────────────────────────────────
   init();
   if (typeof ScannerBridge !== 'undefined' && ScannerBridge.getLastBarcode) {
     startPolling();
+  }
+  // Always show mock scanner (hidden on real Zebra SDK)
+  if (typeof ScannerBridge === 'undefined' || !ScannerBridge.getConfig ||
+      JSON.parse(ScannerBridge.getConfig() || '{}').scannerType !== 'ZEBRA_SDK_STC') {
+    setTimeout(enableMockScanner, 2000);
   }
 
   // ── Public interface ────────────────────────────────────────
