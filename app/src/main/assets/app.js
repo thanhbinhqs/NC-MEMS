@@ -498,6 +498,35 @@
       showToast('🔌 Đã ngắt kết nối scanner');
     }
 
+    // ======================== LOGIN PAGE SCANNER CONNECT ========================
+    function connectScannerFromLogin() {
+      const mac = localStorage.getItem('ncmems_mac_address');
+      if (!mac) { showToast('⚠️ Chưa có địa chỉ MAC. Vui lòng cài đặt MAC trước.'); return; }
+
+      const btn = document.getElementById('loginScanBtn');
+      const status = document.getElementById('loginScannerStatus');
+      btn.disabled = true;
+      btn.textContent = '⏳ Đang kết nối...';
+      status.textContent = '🔄 Đang kết nối tới ' + mac + '...';
+      status.style.color = '#1a4a8a';
+
+      Scanner.connectByAddress(mac);
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '📡 Kết nối Scanner';
+        if (Scanner.connected) {
+          const name = Scanner.getConnectedDevice() || mac;
+          status.textContent = '✅ Đã kết nối: ' + name;
+          status.style.color = '#2e7d32';
+          showToast('📡 Scanner đã sẵn sàng');
+        } else {
+          status.textContent = '❌ Kết nối thất bại. Kiểm tra MAC và Bluetooth.';
+          status.style.color = '#d32f2f';
+        }
+      }, 3000);
+    }
+
     // ======================== LOGOUT ========================
     function confirmLogout() { document.getElementById('logoutModal').classList.add('open'); }
     function closeLogout() { document.getElementById('logoutModal').classList.remove('open'); }
@@ -699,6 +728,19 @@
       container.style.display = 'block';
       if (link) link.style.display = 'none';
       document.getElementById('loginMacQRValue').textContent = saved;
+
+      // Show connect button on login page
+      const scanBtn = document.getElementById('loginScanBtn');
+      const scanStatus = document.getElementById('loginScannerStatus');
+      if (scanBtn) scanBtn.style.display = 'inline-block';
+      if (scanStatus) {
+        if (Scanner.connected) {
+          scanStatus.textContent = '✅ Scanner: ' + (Scanner.getConnectedDevice() || saved);
+          scanStatus.style.color = '#2e7d32';
+        } else {
+          scanStatus.textContent = '';
+        }
+      }
 
       const canvas = document.getElementById('loginQRCanvas');
       const ctx = canvas.getContext('2d');

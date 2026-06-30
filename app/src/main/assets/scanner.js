@@ -150,6 +150,11 @@ const Scanner = (() => {
     ScannerBridge.connectToDevice(address);
   }
 
+  function connectByAddress(address) {
+    if (typeof ScannerBridge === 'undefined' || !ScannerBridge.connectByAddress) return false;
+    return ScannerBridge.connectByAddress(address);
+  }
+
   function disconnect() {
     if (typeof ScannerBridge === 'undefined' || !ScannerBridge.disconnectDevice) return;
     ScannerBridge.disconnectDevice();
@@ -173,6 +178,7 @@ const Scanner = (() => {
     setConfig,
     discover,
     connect,
+    connectByAddress,
     disconnect,
     getConnectedDevice,
     _onBarcodeReceived,  // for native callback

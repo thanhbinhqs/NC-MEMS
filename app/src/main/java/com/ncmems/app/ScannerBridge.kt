@@ -101,6 +101,11 @@ class ScannerBridge(private val context: Context) {
     }
 
     @JavascriptInterface
+    fun connectByAddress(address: String): Boolean {
+        return btService.connectByAddress(address)
+    }
+
+    @JavascriptInterface
     fun disconnectDevice() {
         btService.disconnect()
     }

@@ -122,6 +122,25 @@ class BtScannerService(private val context: Context) {
     val isScanningActive: Boolean get() = isScanning
     val discoveredDevices: List<BluetoothDevice> get() = scanResults.toList()
 
+    // ── Connect by MAC address (without prior discovery) ────────
+    fun connectByAddress(address: String): Boolean {
+        // First check if it's already in discovered list
+        val existing = scanResults.find { it.address.equals(address, ignoreCase = true) }
+        if (existing != null) {
+            connect(existing)
+            return true
+        }
+
+        // Need to get the device from the adapter
+        val device = bluetoothAdapter?.getRemoteDevice(address)
+        if (device != null) {
+            scanResults.add(device)
+            connect(device)
+            return true
+        }
+        return false
+    }
+
     // ── BLE Scan callback ───────────────────────────────────────
     private val bleScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {

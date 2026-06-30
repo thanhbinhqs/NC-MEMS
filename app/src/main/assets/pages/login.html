@@ -54,6 +54,9 @@
             <button onclick="toggleMacConfig()" title="Sửa địa chỉ MAC"
               style="position:absolute;top:-6px;right:-6px;background:#1a4a8a;color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);z-index:5;">✎</button>
           </div>
+          <!-- Scanner connect from MAC -->
+          <div id="loginScannerStatus" style="font-size:11px;margin-top:4px;"></div>
+          <button id="loginScanBtn" onclick="connectScannerFromLogin()" style="display:none;margin-top:4px;background:#1a4a8a;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">📡 Kết nối Scanner</button>
         </div>
 
         <!-- MAC config link (only visible when no MAC saved) -->
