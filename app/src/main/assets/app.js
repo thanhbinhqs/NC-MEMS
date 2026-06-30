@@ -717,11 +717,11 @@
       }
 
       // Draw Code 128 extended pairing barcode: <FNC3>PH11A{mac}
-      // Host 11 = HID BT Classic (scanner connects as keyboard)
-      // Host 16 = SSI BT Classic (for SDK apps)
+      // Fill available width for maximum readability
       const pairingData = Code128.pairingData(qrText, '11');
+      const maxWidth = Math.min(window.innerWidth - 40, 340);
       Code128.draw('loginPairingBarcode', pairingData, {
-        width: 200, height: 60, margin: 8
+        width: maxWidth, height: 72, margin: 12
       });
     }
 
