@@ -7,6 +7,7 @@
           <div style="width:38px;"></div>
         </div>
         <div class="content" id="settingsContent">
+
           <div class="modal-section-title">🎨 Giao diện & Hiển thị</div>
           <div class="setting-row">
             <div>
@@ -21,62 +22,6 @@
               <div class="setting-desc">Tiếng Việt</div>
             </div>
             <span style="color:#1a4a8a;font-weight:600;font-size:13px;cursor:pointer;" onclick="showLanguagePicker()">VI ›</span>
-          </div>
-          <div class="setting-row" onclick="showUnitPicker()" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">Đơn vị hiển thị</div>
-              <div class="setting-desc">Hệ mét / Imperial</div>
-            </div>
-            <span style="color:#1a4a8a;font-weight:600;font-size:13px;">Hệ mét</span>
-          </div>
-
-          <div class="modal-section-title">📶 Kết nối</div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Tự động quét BLE</div>
-              <div class="setting-desc">Tự động tìm thiết bị khi mở app</div>
-            </div>
-            <div class="toggle" id="bleAutoToggle" onclick="toggleBleAuto(this)"></div>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Kết nối lại thiết bị cũ</div>
-              <div class="setting-desc">Tự động kết nối BLE đã ghép đôi</div>
-            </div>
-            <div class="toggle" id="bleReconnectToggle" onclick="toggleBleReconnect(this)"></div>
-          </div>
-          <button class="settings-ble-btn" onclick="openBLEScanner();">
-            📡 Mở BLE Scanner
-          </button>
-          <div class="setting-row" onclick="openWifiConfig()" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">WiFi Config</div>
-              <div class="setting-desc">Cấu hình kết nối mạng cho thiết bị</div>
-            </div>
-            <span style="color:#999;font-size:18px;">›</span>
-          </div>
-          <div class="setting-row" onclick="showToast('Tính năng đang phát triển')" style="cursor:pointer;">
-            <div>
-              <div class="setting-label">Kết nối thiết bị ngoại vi</div>
-              <div class="setting-desc">USB, Serial, NFC</div>
-            </div>
-            <span class="pm-badge" style="position:static;font-size:10px;">Mới</span>
-          </div>
-
-          <div class="modal-section-title">🔔 Thông báo</div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Thông báo đẩy</div>
-              <div class="setting-desc">Nhận thông báo khi có cập nhật</div>
-            </div>
-            <div class="toggle on" id="notifToggle" onclick="toggleNotif()"></div>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div class="setting-label">Cảnh báo tồn kho</div>
-              <div class="setting-desc">Khi số lượng dưới ngưỡng</div>
-            </div>
-            <div class="toggle on" id="stockToggle" onclick="toggleStockAlert(this)"></div>
           </div>
 
           <div class="modal-section-title">ℹ️ Ứng dụng</div>

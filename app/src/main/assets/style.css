@@ -492,26 +492,6 @@
     }
     .toggle.on::after { transform: translateX(20px); }
 
-    /* BLE button in settings */
-    .settings-ble-btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      background: #e8f0fe;
-      color: #1a4a8a;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .settings-ble-btn:active { background: #d0def5; }
-
     /* Confirm logout modal */
     .confirm-content { text-align: center; }
     .confirm-content p { color: #666; font-size: 14px; margin: 8px 0 20px; }
@@ -795,7 +775,6 @@
     body.dark .input-field input::placeholder { color: #666; }
     body.dark .search-hint { color: #666; }
     body.dark .login-footer { color: #555; }
-    body.dark .settings-ble-btn { background: #2a3a5a; color: #8ab4f8; }
     body.dark .modal-close { background: #2a2a2a; color: #eee; }
     body.dark .conn-item { background: #2a2a2a !important; }
     body.dark .conn-item div[style*="font-weight:600"] { color: #eee !important; }
